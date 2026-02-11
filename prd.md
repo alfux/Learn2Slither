@@ -4,7 +4,7 @@
 
 - [ ] Board size 10 by 10 (Bonus for changeable board size) 
 - [ ] Two green apples in a random cell of the board.
-- [ ] On red apple in a random cell of the board.
+- [ ] One red apple in a random cell of the board.
 - [ ] The snake starts with a length of 3 cells, also placed randomly and contiguously on the board.
 - [ ] If the snake hits a wall, game over this training session ends.
 - [ ] If the sanek collides with its own tail, game over this taining session ends.
