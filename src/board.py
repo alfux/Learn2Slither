@@ -15,10 +15,16 @@ class Board:
     def __init__(self: Self, shape: tuple = None) -> None:
         """Board instanciation."""
         self._shape = np.array(shape or (10, 10)) + np.array([1, 1])
-        self._board = self._new_board()
+        self._board = self._create_board()
 
-    def _new_board(self: Self) -> ndarray:
+    def _create_board(self: Self) -> ndarray:
         """Set up a new board."""
+        board = np.zeros(self._shape)
+        board[0] = 1
+        board[-1] = 1
+        board[:, 0] = 1
+        board[:, -1] = 1
+        print(board)
 
     def _rand_pos(self: Self) -> ndarray:
         """Get a random free position in the board."""
