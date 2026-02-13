@@ -6,6 +6,7 @@ import pyglet
 from pyglet.graphics import Batch
 from pyglet.image import SolidColorImagePattern, Texture
 from pyglet.sprite import Sprite
+from pyglet.window import key
 
 from board import Board
 
@@ -17,6 +18,7 @@ class Display:
         """Display instanciation"""
         self._window = pyglet.window.Window(width=800, height=450)
         self._window.push_handlers(on_draw=self.on_draw)
+        self._window.push_handlers(on_key_press=self.on_key_press)
         self._tile_size = 16
         self._atlas = self._init_atlas()
         self._floor = self._atlas[0]
@@ -41,10 +43,20 @@ class Display:
         self._window.close()
 
     def on_draw(self: Self) -> None:
-        """Dispplay event function."""
+        """Display event function."""
         self._window.clear()
         self._update_state()
         self._batch.draw()
+
+    def on_key_press(self: Self, symbol: int, modifier: int) -> None:
+        """Keyboard event function."""
+        match symbol:
+            case key.UP:
+                self._board.forward()
+            case key.LEFT:
+                self._board.left()
+            case key.RIGHT:
+                self._board.right()
 
     def _init_board_display(self: Self) -> list[list[Sprite]]:
         """Initialize the board tiles.
