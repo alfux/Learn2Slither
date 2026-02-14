@@ -26,6 +26,7 @@ class Display:
         self._green_apple = self._atlas[2]
         self._red_apple = self._atlas[1]
         self._snake = self._atlas[4]
+        self._head = self._atlas[5]
         self._board = Board()
         self._height, self._width = self._board.state.shape
         self._batch = Batch()
@@ -87,9 +88,9 @@ class Display:
         """
         colors = [
             [100, 100, 100, 255], [200, 50, 50, 255], [50, 200, 50, 255],
-            [50, 50, 50, 255], [50, 50, 200, 255]
+            [50, 50, 50, 255], [50, 50, 200, 255], [50, 50, 100, 255]
         ]
-        atlas = Texture.create(160, self._tile_size)
+        atlas = Texture.create(32 * len(colors), self._tile_size)
         for i, rgba in enumerate(colors):
             solid = SolidColorImagePattern(rgba)
             solid = solid.create_image(self._tile_size, self._tile_size)
@@ -101,7 +102,7 @@ class Display:
                 self._tile_size,
                 self._tile_size
             )
-            for i in range(5)
+            for i in range(len(colors))
         ]
 
     def _update_state(self: Self) -> None:
@@ -112,7 +113,7 @@ class Display:
                     case Board.W:
                         self._tiles[i][j].image = self._wall
                     case Board.H:
-                        self._tiles[i][j].image = self._snake
+                        self._tiles[i][j].image = self._head
                     case Board.S:
                         self._tiles[i][j].image = self._snake
                     case Board.G:

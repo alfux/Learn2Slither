@@ -150,6 +150,7 @@ class Board:
         self._board[pos] = self.S
         self._snake.append(pos)
         self._remove_free(pos)
+        self._snake_alive = True
 
     def _move_snake(self: Self, dir: ndarray) -> int:
         """Move the snake of one cell in a direction.
@@ -159,24 +160,48 @@ class Board:
         Returns:
             int: The previous code of the head's new cell.
         """
+        if not self._snake_alive:
+            return -1
         aim = tuple(self._snake[0] + dir)
         self._board[self._snake[0]] = self.S
-        self._board[self._snake[-1]] = 0
-        self._snake.appendleft(aim)
-        tail = self._snake.pop()
-        match self._board[aim]:
-            case self.W:
-                self._snake_dir = np.zeros(2).astype(int)
-            case self.S:
-                self._snake_dir = np.zeros(2).astype(int)
+        tail = self._cut_tail()
+        item = self._put_head(aim)
+        match item:
             case self.G:
                 self._board[tail] = self.S
                 self._snake.append(tail)
+                self._remove_free(tail)
+                self._put_item_rand(self.G)
             case self.R:
-                if len(self._snake) > 1:
-                    self._board[self._snake.pop()] = 0
-                else:
-                    self._snake_dir = np.zeros(2).astype(int)
+                self._cut_tail()
+                if len(self._snake) == 0:
+                    self._snake_alive = False
+                    return -1
+                self._put_item_rand(self.R)
+            case 0:
+                self._remove_free(aim)
+            case _:
+                self._snake_alive = False
+        return item
+
+    def _cut_tail(self: Self) -> tuple:
+        """Remove the tip of the tail.
+
+        Returns:
+            tuple: The position of the tail's tip.
+        """
+        tail = self._snake.pop()
+        self._board[tail] = 0
+        self._add_free(tail)
+        return tail
+
+    def _put_head(self: Self, aim: tuple) -> int:
+        """Put the head in aimed position.
+
+        Returns:
+            int: cell's item before the head.
+        """
         item = self._board[aim]
         self._board[aim] = self.H
+        self._snake.appendleft(aim)
         return item
