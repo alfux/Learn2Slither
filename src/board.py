@@ -9,7 +9,7 @@ from numpy import ndarray
 
 
 class Board:
-    """Board class representing the environnement."""
+    """Represent the environnement."""
 
     W, H, S, G, R = 1, 2, 3, 4, 5
     _TOKEN = dict({'W': 1, 'H': 2, 'S': 3, 'G': 4, 'R': 5})

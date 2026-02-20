@@ -12,14 +12,12 @@ from board import Board
 
 
 class Display:
-    """Display creating and managing the graphic interface."""
+    """Manage the graphic interface."""
 
-    def __init__(self: Self, shape: tuple = None) -> None:
+    def __init__(self: Self, board: Board) -> None:
         """Display instanciation"""
-        self._window = pyglet.window.Window(width=800, height=450)
-        self._window.push_handlers(on_draw=self.on_draw)
-        self._window.push_handlers(on_key_press=self.on_key_press)
-        self._tile_size = 16
+        self._board = board
+        self._tile_size = 32
         self._atlas = self._init_atlas()
         self._floor = self._atlas[0]
         self._wall = self._atlas[3]
@@ -27,13 +25,15 @@ class Display:
         self._red_apple = self._atlas[1]
         self._snake = self._atlas[4]
         self._head = self._atlas[5]
-        self._board = Board(shape)
         self._height, self._width = self._board.state.shape
         self._batch = Batch()
-        self._window.set_size(
-            self._tile_size * self._height, self._tile_size * self._width
-        )
         self._tiles = self._init_board_display()
+        self._window = pyglet.window.Window(
+            width=(self._tile_size * self._width),
+            height=(self._tile_size * self._height)
+        )
+        self._window.push_handlers(on_draw=self.on_draw)
+        self._window.push_handlers(on_key_press=self.on_key_press)
 
     def run(self: Self) -> None:
         """Run the event loop."""

@@ -5,7 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "alfux-mlp",
     "bidict>=0.23.1",
     "numpy>=2.4.2",
     "pyglet>=2.1.13",
 ]
+
+[tool.uv.sources]
+alfux-mlp = { git = "ssh://git@github.com/alfux/multilayer-perceptron.git" }

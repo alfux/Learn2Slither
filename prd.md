@@ -6,11 +6,11 @@
 - [x] Two green apples in a random cell of the board.
 - [x] One red apple in a random cell of the board.
 - [x] The snake starts with a length of 3 cells, also placed randomly and contiguously on the board.
-- [ ] If the snake hits a wall, game over this training session ends.
-- [ ] If the snake collides with its own tail, game over this taining session ends.
+- [x] If the snake hits a wall, game over this training session ends.
+- [x] If the snake collides with its own tail, game over this taining session ends.
 - [x] The snake eats a green apple, snake's lenght increase by 1. A new green apple appears on the board.
 - [x] The snake eats a red apple,, snake's length is reduced by 1. A new red apple appears on the board.
-- [ ] If the snake's length drops to 0, game over this training session ends.
+- [x] If the snake's length drops to 0, game over this training session ends.
 
 ### Training sessions
 
