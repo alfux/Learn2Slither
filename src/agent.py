@@ -4,6 +4,8 @@ from typing import Self
 
 from alfux.mlp import MLP
 
+from board import Board
+
 
 class Agent:
     """Learn and plays the game."""
@@ -14,5 +16,12 @@ class Agent:
         Args:
             mlp (MLP): Optional neural network to use.
         """
+        self._mlp = mlp
 
-    def
+    def play(self: Self, board: Board) -> None:
+        """Execute a move in the board.
+
+        Args:
+            board: The game board.
+        """
+        pass
