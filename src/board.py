@@ -12,9 +12,11 @@ class Board:
     """Represent the environnement."""
 
     W, H, S, G, R = 1, 2, 3, 4, 5
-    _TOKEN = dict({'W': 1, 'H': 2, 'S': 3, 'G': 4, 'R': 5})
-    _ROTATION_R = np.array([[0, 1], [-1, 0]])
-    _ROTATION_L = np.array([[0, -1], [1, 0]])
+    _TOKEN = dict({"W": 1, "H": 2, "S": 3, "G": 4, "R": 5})
+    _UP = np.array([-1, 0])
+    _DOWN = np.array([1, 0])
+    _LEFT = np.array([0, -1])
+    _RIGHT = np.array([0, 1])
 
     def __init__(self: Self, shape: tuple = None) -> None:
         """Board instanciation.
@@ -45,7 +47,7 @@ class Board:
         board = str(self._board.astype(int))
         for key, value in self._TOKEN.items():
             board = board.replace(str(value), key)
-        return board.replace('0', ' ')
+        return board.replace("0", " ")
 
     @property
     def state(self: Self) -> ndarray:
@@ -55,31 +57,37 @@ class Board:
             ndarray: The board matrix."""
         return self._board
 
-    def forward(self: Self) -> int:
-        """Move the snake one cell forward.
-
-        Returns:
-            int: The previous code of the head's new cell.
-        """
-        return self._move_snake(self._snake_dir)
-
-    def right(self: Self) -> int:
-        """Move the snake one cell to its right.
-
-        Returns:
-            int: The previous code of the head's new cell.
-        """
-        self._snake_dir = self._ROTATION_R @ self._snake_dir
-        return self._move_snake(self._snake_dir)
-
-    def left(self: Self) -> int:
+    def up(self: Self) -> int:
         """Move the snake one cell up.
 
         Returns:
             int: The previous code of the head's new cell.
         """
-        self._snake_dir = self._ROTATION_L @ self._snake_dir
-        return self._move_snake(self._snake_dir)
+        return self._move_snake(self._UP)
+
+    def down(self: Self) -> int:
+        """Move the snake one cell to its down.
+
+        Returns:
+            int: The previous code of the head's new cell.
+        """
+        return self._move_snake(self._DOWN)
+
+    def left(self: Self) -> int:
+        """Move the snake one cell left.
+
+        Returns:
+            int: The previous code of the head's new cell.
+        """
+        return self._move_snake(self._LEFT)
+
+    def right(self: Self) -> int:
+        """Move the snake one cell right.
+
+        Returns:
+            int: The previous code of the head's new cell.
+        """
+        return self._move_snake(self._RIGHT)
 
     def view(self: Self) -> tuple[ndarray, ndarray]:
         """Get vertical and horizontal view of the snake."""
@@ -140,7 +148,6 @@ class Board:
         around = [hpos + v, hpos - v, hpos + h, hpos - h]
         free = [cell for cell in around if self._board[cell[0], cell[1]] == 0]
         pos = tuple(free[np.random.randint(0, len(free))])
-        self._snake_dir = np.array(hpos) - np.array(pos)
         self._board[pos] = self.S
         self._snake.append(pos)
         self._remove_free(pos)
