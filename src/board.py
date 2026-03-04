@@ -24,8 +24,8 @@ class Board:
         Args:
             shape (tuple): Dimension of the board.
         """
-        self._shape = np.array(shape or (10, 10)) + np.array([1, 1])
-        self._board = np.zeros(self._shape)
+        self._shape = shape if shape is not None else (10, 10)
+        self._board = np.zeros(self._shape + np.array([2, 2]))
         self._board[0] = self.W
         self._board[-1] = self.W
         self._board[:, 0] = self.W
@@ -37,6 +37,9 @@ class Board:
         self._put_item_rand(self.G)
         self._put_item_rand(self.G)
         self._put_item_rand(self.R)
+        self._og_board = self._board.copy()
+        self._og_free_cell = self._free_cell.copy()
+        self._og_snake = self._snake.copy()
 
     def __str__(self: Self) -> str:
         """String representation of the board.
@@ -57,36 +60,47 @@ class Board:
             ndarray: The board matrix."""
         return self._board
 
+    def reset(self: Self) -> None:
+        """Reset the board."""
+        self._board = self._og_board.copy()
+        self._free_cell = self._og_free_cell.copy()
+        self._snake = self._og_snake.copy()
+        self._snake_alive = True
+
     def up(self: Self) -> int:
         """Move the snake one cell up.
 
         Returns:
-            int: The previous code of the head's new cell.
+            int: The new cell's item.
         """
+        print("UP")
         return self._move_snake(self._UP)
 
     def down(self: Self) -> int:
         """Move the snake one cell to its down.
 
         Returns:
-            int: The previous code of the head's new cell.
+            int: The new cell's item.
         """
+        print("DOWN")
         return self._move_snake(self._DOWN)
 
     def left(self: Self) -> int:
         """Move the snake one cell left.
 
         Returns:
-            int: The previous code of the head's new cell.
+            int: The new cell's item.
         """
+        print("LEFT")
         return self._move_snake(self._LEFT)
 
     def right(self: Self) -> int:
         """Move the snake one cell right.
 
         Returns:
-            int: The previous code of the head's new cell.
+            int: The new cell's item.
         """
+        print("RIGHT")
         return self._move_snake(self._RIGHT)
 
     def view(self: Self) -> tuple[ndarray, ndarray]:

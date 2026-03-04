@@ -1,5 +1,6 @@
 """Display module manages the graphic interface."""
 
+import time
 from typing import Self
 
 import pyglet
@@ -49,23 +50,32 @@ class Display:
         self._window.clear()
         self._update_state()
         self._batch.draw()
-        item = self._agent.play()
+        item = self._agent.play(0.4)
         match item:
             case Board.W:
-                self._agent.learn(-1)
-                self._agent.board = Board(self._agent.board._shape)
+                self._agent.learn(0)
+                self._agent.board.reset()
+                print("Dead by wall")
             case Board.H:
-                self._agent.learn(-1)
-                self._agent.board = Board(self._agent.board._shape)
+                self._agent.learn(0)
+                self._agent.board.reset()
+                print("Dead by head")
             case Board.S:
-                self._agent.learn(-1)
-                self._agent.board = Board(self._agent.board._shape)
+                self._agent.learn(0)
+                self._agent.board.reset()
+                print("Dead by body")
+            case -1:
+                self._agent.learn(0)
+                self._agent.board.reset()
+                print("Dead by size")
             case Board.G:
                 self._agent.learn(1)
+                print("Miam")
             case Board.R:
-                self._agent.learn(0.5)
+                self._agent.learn(0.2)
+                print("Eww")
             case _:
-                self._agent.learn(0.1)
+                self._agent.learn(0.3)
 
     def _init_board_display(self: Self) -> list[list[Sprite]]:
         """Initialize the board tiles.

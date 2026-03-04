@@ -39,9 +39,11 @@ class Agent:
         """
         self._board = value
 
-    def play(self: Self) -> int:
+    def play(self: Self, temperature: float = 1) -> int:
         """Execute a move in the board.
 
+        Args:
+            temperature (float): ratio of random action.
         Returns:
             int: The item on the board after a move.
         """
@@ -50,9 +52,13 @@ class Agent:
         for i in range(4):
             context = np.concatenate((view, [[i]]), axis=1)
             reward = self._mlp.eval(context)
+            print(i, reward)
             if reward > higher_reward:
                 self._last_context = context
                 higher_reward = reward
+        if np.random.random_sample(1) < temperature:
+            self._last_context[0, -1] = np.random.randint(0, 4)
+        print("CHOICE", self._last_context[0, -1], "-----------")
         match self._last_context[0, -1]:
             case 0:
                 return self._board.up()
@@ -69,4 +75,5 @@ class Agent:
         Args:
             reward (float): Success or mistake indicator.
         """
-        self._mlp.update(np.array([[reward]]), self._last_context)
+        for _ in self._mlp.update(np.array([[reward]]), self._last_context):
+            pass
