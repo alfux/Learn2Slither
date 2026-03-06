@@ -13,10 +13,8 @@ class Board:
 
     W, H, S, G, R = 1, 2, 3, 4, 5
     _TOKEN = dict({"W": 1, "H": 2, "S": 3, "G": 4, "R": 5})
-    _UP = np.array([-1, 0])
-    _DOWN = np.array([1, 0])
-    _LEFT = np.array([0, -1])
-    _RIGHT = np.array([0, 1])
+    _MOVES = np.array([[-1, 0], [1, 0], [0, -1], [0, 1]])
+    _PRINTS = ["UP", "DOWN", "LEFT", "RIGHT"]
 
     def __init__(self: Self, shape: tuple = None) -> None:
         """Board instanciation.
@@ -53,6 +51,14 @@ class Board:
         return board.replace("0", " ")
 
     @property
+    def shape(self: Self) -> tuple:
+        """Get the shape of the board.
+
+        Returns:
+            tuple: (height, width)"""
+        return self._shape
+
+    @property
     def state(self: Self) -> ndarray:
         """Get the state of the board.
 
@@ -65,48 +71,24 @@ class Board:
         self._board = self._og_board.copy()
         self._free_cell = self._og_free_cell.copy()
         self._snake = self._og_snake.copy()
+        self._head = self._snake[0]
         self._snake_alive = True
 
-    def up(self: Self) -> int:
-        """Move the snake one cell up.
+    def move(self: Self, move: int) -> int:
+        """Move th snake.
 
+        Args:
+            move: 0 UP, 1 DOWN, 2 LEFT, 3 RIGHT.
         Returns:
             int: The new cell's item.
         """
-        print("UP")
-        return self._move_snake(self._UP)
-
-    def down(self: Self) -> int:
-        """Move the snake one cell to its down.
-
-        Returns:
-            int: The new cell's item.
-        """
-        print("DOWN")
-        return self._move_snake(self._DOWN)
-
-    def left(self: Self) -> int:
-        """Move the snake one cell left.
-
-        Returns:
-            int: The new cell's item.
-        """
-        print("LEFT")
-        return self._move_snake(self._LEFT)
-
-    def right(self: Self) -> int:
-        """Move the snake one cell right.
-
-        Returns:
-            int: The new cell's item.
-        """
-        print("RIGHT")
-        return self._move_snake(self._RIGHT)
+        # print(self._PRINTS[move])
+        return self._move_snake(self._MOVES[move])
 
     def view(self: Self) -> tuple[ndarray, ndarray]:
         """Get vertical and horizontal view of the snake."""
-        vertical = self._board[:, self._snake[0][1]]
-        horizontal = self._board[self._snake[0][0], :]
+        vertical = self._board[:, self._head[1]]
+        horizontal = self._board[self._head[0], :]
         return [vertical, horizontal]
 
     def _put_item_rand(self: Self, item: int) -> ndarray:
@@ -159,6 +141,7 @@ class Board:
         v, h = np.array([1, 0]), np.array([0, 1])
         hpos = self._put_item_rand(self.H)
         self._snake = deque([tuple(hpos)])
+        self._head = hpos
         around = [hpos + v, hpos - v, hpos + h, hpos - h]
         free = [cell for cell in around if self._board[cell[0], cell[1]] == 0]
         pos = tuple(free[np.random.randint(0, len(free))])
@@ -225,4 +208,5 @@ class Board:
         item = self._board[aim]
         self._board[aim] = self.H
         self._snake.appendleft(aim)
+        self._head = aim
         return item

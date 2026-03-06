@@ -5,16 +5,28 @@
   "preprocess": [],
   "layers": [
     {
-      "dimension": [13, 25],
+      "dimension": [64, 24],
       "mono": false,
       "matrix": null,
       "activation": "LReLU"
     },
     {
-      "dimension": [1, 13],
+      "dimension": [64, 64],
+      "mono": false,
+      "matrix": null,
+      "activation": "LReLU"
+    },
+    {
+      "dimension": [64, 64],
+      "mono": false,
+      "matrix": null,
+      "activation": "LReLU"
+    },
+    {
+      "dimension": [4, 64],
       "mono": true,
       "matrix": null,
-      "activation": "sigmoid"
+      "activation": "identity"
     }
   ],
   "postprocess": []

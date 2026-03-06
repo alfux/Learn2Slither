@@ -5,75 +5,105 @@ from typing import Self
 import numpy as np
 from alfux.mlp import MLP
 
-from board import Board
-
 
 class Agent:
     """Learn and plays the game."""
 
-    def __init__(self: Self, board: Board, mlp: MLP) -> None:
+    ACTIONS = np.eye(4)
+
+    def __init__(
+        self: Self, mlp: MLP,
+        discount: float = 0.99, *,
+        training: bool = True
+    ) -> None:
         """Instanciate the Agent.
 
         Args:
             mlp (MLP): Neural network.
+            discount (float): Weight of the next step on the reward.
+            traininf (bool): State of training (on or off).
         """
-        self._board = board
         self._mlp = mlp
         self._last_context = None
+        self._last_action = None
+        self._last_rewards = None
+        self._discount = discount
+        self._training = training
 
     @property
-    def board(self: Self) -> Board:
-        """Get the board.
+    def training(self: Self) -> bool:
+        """Get training state.
 
         Returns:
-            Board: The board.
+            bool: Training state.
         """
-        return self._board
+        return self._training
 
-    @board.setter
-    def board(self: Self, value: Board) -> None:
-        """Set the board.
+    @training.setter
+    def training(self: Self, value: bool) -> None:
+        """Set training state.
 
         Args:
-            value (Board): The new board.
+            value (bool): New training state.
         """
-        self._board = value
+        self._training = value
 
-    def play(self: Self, temperature: float = 1) -> int:
+    def play(self: Self, view: list, temperature: float = 0) -> int:
         """Execute a move in the board.
 
         Args:
+            view (list): Snake's vision.
             temperature (float): ratio of random action.
         Returns:
             int: The item on the board after a move.
         """
-        view = np.atleast_2d(np.concatenate(self._board.view()))
-        higher_reward = -np.inf
-        for i in range(4):
-            context = np.concatenate((view, [[i]]), axis=1)
-            reward = self._mlp.eval(context)
-            print(i, reward)
-            if reward > higher_reward:
-                self._last_context = context
-                higher_reward = reward
+        self._last_context = np.atleast_2d(np.concatenate(view))
+        self._last_rewards = self._mlp.eval(self._last_context)
         if np.random.random_sample(1) < temperature:
-            self._last_context[0, -1] = np.random.randint(0, 4)
-        print("CHOICE", self._last_context[0, -1], "-----------")
-        match self._last_context[0, -1]:
-            case 0:
-                return self._board.up()
-            case 1:
-                return self._board.down()
-            case 2:
-                return self._board.left()
-            case 3:
-                return self._board.right()
+            self._last_action = np.random.randint(0, 4)
+        else:
+            self._last_action = np.argmax(self._last_rewards)
+        return self._last_action
 
-    def learn(self: Self, reward: float) -> None:
+    def learn(
+        self: Self, view: list, reward: float, death: bool = False
+    ) -> None:
         """Learn from success or mistake represented by reward.
 
         Args:
+            view (list): Snake's vision.
             reward (float): Success or mistake indicator.
         """
-        for _ in self._mlp.update(np.array([[reward]]), self._last_context):
+        if not self._training:
+            return
+        new_context = np.atleast_2d(np.concatenate(view))
+        target = reward
+        if not death:
+            target += self._discount * np.max(self._mlp.eval(new_context))
+        self._last_rewards[0, self._last_action] = target
+        for cost in self._mlp.update(self._last_rewards, self._last_context):
+            # print(cost)
             pass
+
+    def save(self: Self, path: str) -> None:
+        """Save the agent.
+
+        Args:
+            path (str): path of the file.
+        """
+        self._mlp.save(path)
+
+    @staticmethod
+    def load(
+        path: str, discount: float = 0.99, *, training: bool = True
+    ) -> Agent:
+        """Load an agent from a file.
+
+        Args:
+            path (str): path of the file.
+            discount (float): Weight of the next step on the reward.
+            traininf (bool): State of training (on or off).
+        Returns:
+            Agent: The loaded agent.
+        """
+        return Agent(MLP.loadf(path), discount, training=training)
