@@ -75,6 +75,8 @@ class Agent:
         new_context = np.atleast_2d(np.concatenate(view))
         target = reward + discount * np.max(self._mlp.eval(new_context))
         # Add a learning rate ?
+        # Implement replay buffer
+        # Implement target network
         self._last_rewards[0, self._last_action] = target
         for cost in self._mlp.update(self._last_rewards, self._last_context):
             # print(cost)
