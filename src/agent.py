@@ -11,23 +11,17 @@ class Agent:
 
     ACTIONS = np.eye(4)
 
-    def __init__(
-        self: Self, mlp: MLP,
-        discount: float = 0.99, *,
-        training: bool = True
-    ) -> None:
+    def __init__(self: Self, mlp: MLP, *, training: bool = True) -> None:
         """Instanciate the Agent.
 
         Args:
             mlp (MLP): Neural network.
-            discount (float): Weight of the next step on the reward.
             traininf (bool): State of training (on or off).
         """
         self._mlp = mlp
         self._last_context = None
         self._last_action = None
         self._last_rewards = None
-        self._discount = discount
         self._training = training
 
     @property
@@ -59,6 +53,7 @@ class Agent:
         """
         self._last_context = np.atleast_2d(np.concatenate(view))
         self._last_rewards = self._mlp.eval(self._last_context)
+        print("\r", self._last_rewards, end="                  ")
         if np.random.random_sample(1) < temperature:
             self._last_action = np.random.randint(0, 4)
         else:
@@ -66,20 +61,20 @@ class Agent:
         return self._last_action
 
     def learn(
-        self: Self, view: list, reward: float, death: bool = False
+        self: Self, view: list, reward: float, discount: float
     ) -> None:
         """Learn from success or mistake represented by reward.
 
         Args:
             view (list): Snake's vision.
             reward (float): Success or mistake indicator.
+            discount (float): Influence of next steps in the reward.
         """
         if not self._training:
             return
         new_context = np.atleast_2d(np.concatenate(view))
-        target = reward
-        if not death:
-            target += self._discount * np.max(self._mlp.eval(new_context))
+        target = reward + discount * np.max(self._mlp.eval(new_context))
+        # Add a learning rate ?
         self._last_rewards[0, self._last_action] = target
         for cost in self._mlp.update(self._last_rewards, self._last_context):
             # print(cost)
@@ -94,9 +89,7 @@ class Agent:
         self._mlp.save(path)
 
     @staticmethod
-    def load(
-        path: str, discount: float = 0.99, *, training: bool = True
-    ) -> Agent:
+    def load(path: str, *, training: bool = True) -> Agent:
         """Load an agent from a file.
 
         Args:
@@ -106,4 +99,4 @@ class Agent:
         Returns:
             Agent: The loaded agent.
         """
-        return Agent(MLP.loadf(path), discount, training=training)
+        return Agent(MLP.loadf(path), training=training)

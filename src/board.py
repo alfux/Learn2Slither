@@ -32,8 +32,9 @@ class Board:
         self._free_cell = {k: tuple(v) for k, v in enumerate(self._free_cell)}
         self._free_cell = bidict(self._free_cell)
         self._create_snake()
-        self._put_item_rand(self.G)
-        self._put_item_rand(self.G)
+        g1 = self._put_item_rand(self.G)
+        g2 = self._put_item_rand(self.G)
+        self._green_pos = {g1, g2}
         self._put_item_rand(self.R)
         self._og_board = self._board.copy()
         self._og_free_cell = self._free_cell.copy()
@@ -49,6 +50,24 @@ class Board:
         for key, value in self._TOKEN.items():
             board = board.replace(str(value), key)
         return board.replace("0", " ")
+
+    @property
+    def greens(self: Self) -> set:
+        """Set of green apple positions.
+
+        Returns:
+            set: green apple positions.
+        """
+        return self._green_pos
+
+    @property
+    def head(self: Self) -> tuple:
+        """Head position.
+
+        Returns:
+            tuple: Head position.
+        """
+        return self._head
 
     @property
     def shape(self: Self) -> tuple:
@@ -175,7 +194,8 @@ class Board:
                 self._board[tail] = self.S
                 self._snake.append(tail)
                 self._remove_free(tail)
-                self._put_item_rand(self.G)
+                self._green_pos.remove(aim)
+                self._green_pos.add(self._put_item_rand(self.G))
             case self.R:
                 self._cut_tail()
                 if len(self._snake) == 0:

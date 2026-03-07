@@ -3,6 +3,7 @@
 import time
 from typing import Self
 
+import numpy as np
 import pyglet
 from pyglet.graphics import Batch
 from pyglet.image import SolidColorImagePattern, Texture
@@ -27,6 +28,7 @@ class Display:
         """
         self._window = pyglet.window.Window()
         self._board = board
+        self._last_distance = self._green_distance()
         self._agent = agent
         self._temp = temp
         self._tile_size = 32
@@ -53,8 +55,8 @@ class Display:
 
     def close(self: Self) -> None:
         """Close the event loop."""
-        self._window.close()
         self._agent.save("agent.json")
+        pyglet.app.exit()
 
     def on_draw(self: Self) -> None:
         """Display event function."""
@@ -62,26 +64,49 @@ class Display:
         self._update_state()
         self._batch.draw()
         move = self._agent.play(self._board.view(), self._temp)
-        item = self._board.move(move)
-        match item:
-            case Board.W:
-                self._agent.learn(self._board.view(), -1, True)
+        cell = self._board.move(move)
+        if not self._rules(cell):
+            self._temp = np.max([0.05, self._temp - 1e-4])
+            print(self._temp, end="                             ")
+
+    def _rules(self: Self, cell: int) -> bool:
+        """Apply rule of rewards.
+
+        Args:
+            cell (int): Kind of cell the snake stepped on.
+        Returns:
+            bool: True (alive), False (...dead).
+        """
+        view = self._board.view()
+        match cell:
+            case Board.W | Board.S | -1:
+                self._agent.learn(view, -1, 0)
                 self._board = Board(self._board.shape)
-            case Board.H:
-                self._agent.learn(self._board.view(), -1, True)
-                self._board = Board(self._board.shape)
-            case Board.S:
-                self._agent.learn(self._board.view(), -1, True)
-                self._board = Board(self._board.shape)
-            case -1:
-                self._agent.learn(self._board.view(), -1, True)
-                self._board = Board(self._board.shape)
+                self._last_distance = self._green_distance()
+                return False
             case Board.G:
-                self._agent.learn(self._board.view(), 1)
+                self._agent.learn(view, 1, 1)
             case Board.R:
-                self._agent.learn(self._board.view(), -0.5)
+                self._agent.learn(view, -0.5, 1)
             case 0:
-                self._agent.learn(self._board.view(), -0.1)
+                delta = self._last_distance - self._green_distance()
+                delta = 0 if delta == 0 else -0.02 * np.sign(delta)
+                self._agent.learn(view, -0.01 + delta, 1)
+        return True
+
+    def _green_distance(self: Self) -> int:
+        """Distance to closest green.
+
+        Returns:
+            int: Distance to closest green.
+        """
+        distance = np.inf
+        head = self._board.head
+        for green in self._board.greens:
+            d = green[0] - head[0] + green[1] - head[1]
+            if d < distance:
+                distance = d
+        return distance
 
     def _init_board_display(self: Self) -> list[list[Sprite]]:
         """Initialize the board tiles.
