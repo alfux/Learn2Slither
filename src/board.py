@@ -52,24 +52,6 @@ class Board:
         return board.replace("0", " ")
 
     @property
-    def greens(self: Self) -> set:
-        """Set of green apple positions.
-
-        Returns:
-            set: green apple positions.
-        """
-        return self._green_pos
-
-    @property
-    def head(self: Self) -> tuple:
-        """Head position.
-
-        Returns:
-            tuple: Head position.
-        """
-        return self._head
-
-    @property
     def shape(self: Self) -> tuple:
         """Get the shape of the board.
 
@@ -84,6 +66,15 @@ class Board:
         Returns:
             ndarray: The board matrix."""
         return self._board
+
+    @property
+    def snake_length(self: Self) -> int:
+        """Get Snake's length.
+
+        Returns:
+            int: Snake's length.
+        """
+        return len(self._snake)
 
     def reset(self: Self) -> None:
         """Reset the board."""
@@ -109,6 +100,20 @@ class Board:
         vertical = self._board[:, self._head[1]]
         horizontal = self._board[self._head[0], :]
         return [vertical, horizontal]
+
+    def green_distance(self: Self) -> int:
+        """Distance to closest green.
+
+        Returns:
+            int: Distance to closest green.
+        """
+        distance = np.inf
+        head = self._head
+        for green in self._green_pos:
+            d = np.abs(green[0] - head[0]) + np.abs(green[1] - head[1])
+            if d < distance:
+                distance = d
+        return distance
 
     def _put_item_rand(self: Self, item: int) -> ndarray:
         """Put an item in a random free cell in the board.

@@ -28,8 +28,9 @@ class Display:
         """
         self._window = pyglet.window.Window()
         self._board, self._agent, self._temp = board, agent, temp
-        self._last_distance = self._green_distance()
-        self._stamina, self._max_stamina = 0, np.max(self._board.shape) ** 2
+        self._last_distance = self._board.green_distance()
+        self._max_stamina = np.max(self._board.shape) * 2
+        self._stamina = self._max_stamina
         self._tile_size = 32
         self._atlas = self._init_atlas()
         self._floor = self._atlas[0]
@@ -66,9 +67,11 @@ class Display:
         self._batch.draw()
         move = self._agent.play(self._board.view(), self._temp)
         cell = self._board.move(move)
+        print(self._temp, self._board.snake_length, end="                ")
+        if self._board.snake_length > 3:
+            print()
         if not self._rules(cell):
-            self._temp = np.max([0.05, self._temp - 1e-4])
-            print(self._temp, end="                             ")
+            self._temp = np.max([0.05, self._temp - 5e-4])
 
     def _rules(self: Self, cell: int) -> bool:
         """Apply rule of rewards.
@@ -81,84 +84,71 @@ class Display:
         view = self._board.view()
         match cell:
             case Board.W | Board.S | -1:
-                return self._death_rules(view)
+                return self._death_rules(view, 0)
             case Board.G:
-                return self._green_rules(view)
+                return self._green_rules(view, 0.95)
             case Board.R:
-                return self._red_rules(view)
+                return self._red_rules(view, 0.95)
             case 0:
-                return self._neutral_rules(view)
+                return self._neutral_rules(view, 0.95)
         raise ValueError("_rules: corrupted board cell.")
 
-    def _death_rules(self: Self, view: tuple) -> bool:
+    def _death_rules(self: Self, view: tuple, discount: float) -> bool:
         """Death rules.
 
         Args:
             view (tuple): current snake's view.
+            discount (float): discount of the Bellman equation.
         Returns:
             bool: Returns False
         """
-        self._agent.learn(view, -1, 0)
+        self._agent.learn(view, -1, discount)
         self._board = Board(self._board.shape)
-        self._last_distance = self._green_distance()
+        self._last_distance = self._board.green_distance()
         self._stamina = self._max_stamina
         return False
 
-    def _green_rules(self: Self, view: tuple) -> bool:
+    def _green_rules(self: Self, view: tuple, discount: float) -> bool:
         """Green rules.
 
         Args:
             view (tuple): current snake's view.
+            discount (float): discount of the Bellman equation.
         Returns:
             bool: Returns True
         """
-        self._agent.learn(view, 1, 1)
+        self._agent.learn(view, 3, discount)
         self._stamina = self._max_stamina
         return True
 
-    def _red_rules(self: Self, view: tuple) -> bool:
+    def _red_rules(self: Self, view: tuple, discount: float) -> bool:
         """Red rules.
 
         Args:
             view (tuple): current snake's view.
+            discount (float): discount of the Bellman equation.
         Returns:
             bool: Returns True
         """
-        self._agent.learn(view, -0.5, 1)
+        self._agent.learn(view, -0.5, discount)
         self._stamina = self._max_stamina
         return True
 
-    def _neutral_rules(self: Self, view) -> bool:
+    def _neutral_rules(self: Self, view: tuple, discount: float) -> bool:
         """Red rules.
 
         Args:
             view (tuple): current snake's view.
+            discount (float): discount of the Bellman equation.
         Returns:
             bool: True or False if the snake is alive or dead.
         """
         if self._stamina <= 0:
-            return self._death_rules(view)
-        new_distance = self._green_distance()
-        delta = self._last_distance - new_distance
-        delta = -0.01 if delta == 0 else 0.02 * np.sign(delta)
-        self._agent.learn(view, delta, 1)
-        self._last_distance = new_distance
+            return self._death_rules(view, 0)
+        delta = -0.01
+        self._agent.learn(view, delta, discount)
         self._stamina -= 1
         return True
-
-    def _green_distance(self: Self) -> int:
-        """Distance to closest green.
-
-        Returns:
-            int: Distance to closest green.
-        """
-        distance = np.inf
-        head = self._board.head
-        for green in self._board.greens:
-            d = green[0] - head[0] + green[1] - head[1]
-            if d < distance:
-                distance = d
-        return distance
 
     def _init_board_display(self: Self) -> list[list[Sprite]]:
         """Initialize the board tiles.
