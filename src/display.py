@@ -1,6 +1,6 @@
 """Display module manages the graphic interface."""
 
-import time
+import sys
 from typing import Self
 
 import numpy as np
@@ -27,10 +27,9 @@ class Display:
                 high randomness.
         """
         self._window = pyglet.window.Window()
-        self._board = board
+        self._board, self._agent, self._temp = board, agent, temp
         self._last_distance = self._green_distance()
-        self._agent = agent
-        self._temp = temp
+        self._stamina, self._max_stamina = 0, np.max(self._board.shape) ** 2
         self._tile_size = 32
         self._atlas = self._init_atlas()
         self._floor = self._atlas[0]
@@ -44,10 +43,12 @@ class Display:
         self._tiles = self._init_board_display()
         self._window.push_handlers(on_draw=self.on_draw)
         self._window.push_handlers(on_close=self.close)
-        self._window.set_size(
-            width=(self._tile_size * self._width),
-            height=(self._tile_size * self._height),
-        )
+        width = self._tile_size * self._width
+        height = self._tile_size * self._height
+        if sys.platform == "darwin":
+            width /= 2
+            height /= 2
+        self._window.set_size(width, height)
 
     def run(self: Self) -> None:
         """Run the event loop."""
@@ -80,18 +81,69 @@ class Display:
         view = self._board.view()
         match cell:
             case Board.W | Board.S | -1:
-                self._agent.learn(view, -1, 0)
-                self._board = Board(self._board.shape)
-                self._last_distance = self._green_distance()
-                return False
+                return self._death_rules(view)
             case Board.G:
-                self._agent.learn(view, 1, 1)
+                return self._green_rules(view)
             case Board.R:
-                self._agent.learn(view, -0.5, 1)
+                return self._red_rules(view)
             case 0:
-                delta = self._last_distance - self._green_distance()
-                delta = 0 if delta == 0 else -0.02 * np.sign(delta)
-                self._agent.learn(view, -0.01 + delta, 1)
+                return self._neutral_rules(view)
+        raise ValueError("_rules: corrupted board cell.")
+
+    def _death_rules(self: Self, view: tuple) -> bool:
+        """Death rules.
+
+        Args:
+            view (tuple): current snake's view.
+        Returns:
+            bool: Returns False
+        """
+        self._agent.learn(view, -1, 0)
+        self._board = Board(self._board.shape)
+        self._last_distance = self._green_distance()
+        self._stamina = self._max_stamina
+        return False
+
+    def _green_rules(self: Self, view: tuple) -> bool:
+        """Green rules.
+
+        Args:
+            view (tuple): current snake's view.
+        Returns:
+            bool: Returns True
+        """
+        self._agent.learn(view, 1, 1)
+        self._stamina = self._max_stamina
+        return True
+
+    def _red_rules(self: Self, view: tuple) -> bool:
+        """Red rules.
+
+        Args:
+            view (tuple): current snake's view.
+        Returns:
+            bool: Returns True
+        """
+        self._agent.learn(view, -0.5, 1)
+        self._stamina = self._max_stamina
+        return True
+
+    def _neutral_rules(self: Self, view) -> bool:
+        """Red rules.
+
+        Args:
+            view (tuple): current snake's view.
+        Returns:
+            bool: True or False if the snake is alive or dead.
+        """
+        if self._stamina <= 0:
+            return self._death_rules(view)
+        new_distance = self._green_distance()
+        delta = self._last_distance - new_distance
+        delta = -0.01 if delta == 0 else 0.02 * np.sign(delta)
+        self._agent.learn(view, delta, 1)
+        self._last_distance = new_distance
+        self._stamina -= 1
         return True
 
     def _green_distance(self: Self) -> int:

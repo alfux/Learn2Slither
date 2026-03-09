@@ -17,7 +17,7 @@
 An untrained agent will quickly fail. A unique training session can’t be enough to learn: the agent will face hundreds or thousands of training sessions to increase  its skills.
 
 - [ ] The main program will offer a command line parameter to define how many training sessions should be executed.
-- [ ] Graphical interface displaying the board and its items through time. Each choice of the agent updates the board.
+- [x] Graphical interface displaying the board and its items through time. Each choice of the agent updates the board.
 - [ ] The display speed can be configured, with at least one human-readable speed.
 - [ ] Step by step mode.
 
@@ -25,7 +25,7 @@ An untrained agent will quickly fail. A unique training session can’t be enoug
 
 ### Snake vision
 
-- [ ] The snake can only see in the 4 directions from its head.
+- [x] The snake can only see in the 4 directions from its head.
 - [ ] The terminal must show his 4 direction vision as follows:
           W 
           0
@@ -48,26 +48,26 @@ W000000000HW
 
 ## Action
 
-- [ ] Your agent can only perform 4 actions (UP, LEFT, DOWN, RIGHT).
-- [ ] This "vision" constitue the only information available to the agent.
-- [ ] Board and environment is displayed in a dedicated window.
+- [x] Your agent can only perform 4 actions (UP, LEFT, DOWN, RIGHT).
+- [x] This "vision" constitue the only information available to the agent.
+- [x] Board and environment is displayed in a dedicated window.
 - [ ] Vision and actions are displayed in the terminal.
 
 ## Rewards
 
 - [ ] The goal of the snake is to reach at least a length of 10 cells, and stay alive as long as possible.
-- [ ] The agent must learn from its actions and environment.
+- [x] The agent must learn from its actions and environment.
 
 ## Q-learning
 
-- [ ] The model uses a Q-function to evaluate the quality of an action in a specific state.
-- [ ] The Q-function is implemented with Q-values in a Q-table or a Neural Network.
-- [ ] The training algorithm updates the Q-function to improve performance based on the reward system.
+- [x] The model uses a Q-function to evaluate the quality of an action in a specific state.
+- [x] The Q-function is implemented with Q-values in a Q-table or a Neural Network.
+- [x] The training algorithm updates the Q-function to improve performance based on the reward system.
 - [ ] You can train multiple models using different update approaches for the Q function.
-- [ ] To discover new paths, the agent must sometimes take random actions.
+- [x] To discover new paths, the agent must sometimes take random actions.
 - [ ] The training repeats iteratively and iterations are configurable.
-- [ ] At any time it is possible to export a file describing the current learning state if the agent. (Save)
-- [ ] A file can be imported by the agent to restore its learning. (Import)
+- [ ] At any time it is possible to export a file describing the current learning state of the agent. (Save)
+- [x] A file can be imported by the agent to restore its learning. (Import)
 - [ ] Train multiple models for the git repository.
 - [ ] A configuration switch must be available to stop the agent from learning. In this state, it must ignore rewards.
 - [ ] It is possible to remove graphical display and terminal states in order to speed up the training.
@@ -76,9 +76,9 @@ W000000000HW
 
 The program must be modular and have three distinct parts:
 
-- [ ] Environment (Board).
+- [x] Environment (Board).
 - [ ] Interpreter (Vision / Rewards).
-- [ ] Agent (Decision / Learning).
+- [x] Agent (Decision / Learning).
 
 ## Turn-in and Peer-Evaluation
 

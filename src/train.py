@@ -7,5 +7,5 @@ from agent import Agent
 
 board = Board()
 agent = Agent.load("brain.json")
-display = Display(board, agent, 0.1)
+display = Display(board, agent, 1)
 display.run()

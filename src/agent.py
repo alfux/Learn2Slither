@@ -11,7 +11,14 @@ class Agent:
 
     ACTIONS = np.eye(4)
 
-    def __init__(self: Self, mlp: MLP, *, training: bool = True) -> None:
+    def __init__(
+            self: Self,
+            mlp: MLP, *,
+            training: bool = True,
+            replay_buffer_size=1000,
+            replay_batch_ratio=0.1,
+            target_network_update_rate=100
+    ) -> None:
         """Instanciate the Agent.
 
         Args:
@@ -19,10 +26,20 @@ class Agent:
             traininf (bool): State of training (on or off).
         """
         self._mlp = mlp
+        self._target_mlp = mlp.copy()
+        self._replay_buffer_rewards = np.zeros((replay_buffer_size, 4))
+        self._replay_buffer_context = np.zeros(
+            (replay_buffer_size, mlp.layers[0].W.shape[1])
+        )
+        self._replay_index = 0
+        self._replay_buffer_size = replay_buffer_size
+        self._replay_batch_size = int(replay_batch_ratio * replay_buffer_size)
         self._last_context = None
         self._last_action = None
         self._last_rewards = None
         self._training = training
+        self._target_netwrok_update_rate = target_network_update_rate
+        self._target_network_i = 0
 
     @property
     def training(self: Self) -> bool:
@@ -73,14 +90,29 @@ class Agent:
         if not self._training:
             return
         new_context = np.atleast_2d(np.concatenate(view))
-        target = reward + discount * np.max(self._mlp.eval(new_context))
-        # Add a learning rate ?
-        # Implement replay buffer
-        # Implement target network
+        target = reward + discount * np.max(self._target_mlp.eval(new_context))
         self._last_rewards[0, self._last_action] = target
-        for cost in self._mlp.update(self._last_rewards, self._last_context):
-            # print(cost)
+        self._last_context = np.concatenate(
+            [self._last_context, [[1]]], axis=1
+        )
+        for _ in self._mlp.update(self._last_rewards, self._last_context):
             pass
+        i = np.random.choice(self._replay_buffer_size, self._replay_batch_size)
+        replay_rewards = self._replay_buffer_rewards[i]
+        replay_context = self._replay_buffer_context[i]
+        for _ in self._mlp.update(replay_rewards, replay_context):
+            pass
+        self._replay_buffer_rewards[self._replay_index] = self._last_rewards
+        self._replay_buffer_context[self._replay_index] = self._last_context
+        self._replay_index = self._replay_index + 1
+        self._replay_index %= self._replay_buffer_size
+        if self._target_network_i >= self._target_netwrok_update_rate:
+            self._target_mlp = self._mlp.copy()
+            self._target_network_i = 0
+        else:
+            self._target_network_i += 1
+
+        # Add a learning rate ?
 
     def save(self: Self, path: str) -> None:
         """Save the agent.
