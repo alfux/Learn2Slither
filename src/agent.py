@@ -4,6 +4,7 @@ from typing import Self
 
 import numpy as np
 from alfux.mlp import MLP
+from numpy import ndarray
 
 
 class Agent:
@@ -27,10 +28,10 @@ class Agent:
         """
         self._mlp = mlp
         self._target_mlp = mlp.copy()
+        n = mlp.layers[0].W.shape[1]
+        self._replay_buffer_state = np.zeros((replay_buffer_size, n))
         self._replay_buffer_rewards = np.zeros((replay_buffer_size, 4))
-        self._replay_buffer_context = np.zeros(
-            (replay_buffer_size, mlp.layers[0].W.shape[1])
-        )
+        self._replay_buffer_next = np.zeros((replay_buffer_size, n))
         self._replay_index = 0
         self._replay_buffer_size = replay_buffer_size
         self._replay_batch_size = int(replay_batch_ratio * replay_buffer_size)
@@ -99,11 +100,11 @@ class Agent:
             pass
         i = np.random.choice(self._replay_buffer_size, self._replay_batch_size)
         replay_rewards = self._replay_buffer_rewards[i]
-        replay_context = self._replay_buffer_context[i]
+        replay_context = self._replay_buffer_state[i]
         for _ in self._mlp.update(replay_rewards, replay_context):
             pass
         self._replay_buffer_rewards[self._replay_index] = self._last_rewards
-        self._replay_buffer_context[self._replay_index] = self._last_context
+        self._replay_buffer_state[self._replay_index] = self._last_context
         self._replay_index = self._replay_index + 1
         self._replay_index %= self._replay_buffer_size
         if self._target_network_i >= self._target_netwrok_update_rate:
@@ -112,7 +113,9 @@ class Agent:
         else:
             self._target_network_i += 1
 
-        # Add a learning rate ?
+    def _train(self: Self, sarn: list)
+
+    # Add a learning rate ?
 
     def save(self: Self, path: str) -> None:
         """Save the agent.
