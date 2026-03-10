@@ -10,19 +10,19 @@
   ],
   "layers": [
     {
-      "dimension": [32, 25],
+      "dimension": [16, 29],
       "mono": false,
       "matrix": null,
       "activation": "LReLU"
     },
     {
-      "dimension": [32, 32],
+      "dimension": [8, 16],
       "mono": false,
       "matrix": null,
       "activation": "LReLU"
     },
     {
-      "dimension": [4, 32],
+      "dimension": [4, 8],
       "mono": true,
       "matrix": null,
       "activation": "identity"

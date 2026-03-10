@@ -17,8 +17,8 @@ class Agent:
             self: Self,
             mlp: MLP, *,
             training: bool = True,
-            replay_buffer_size=64,
-            replay_batch_ratio=0.1,
+            replay_buffer_size=512,
+            replay_batch_size=64,
             target_network_update_rate=1000
     ) -> None:
         """Instanciate the Agent.
@@ -38,8 +38,7 @@ class Agent:
         self._replay_index = 0
         self._buffer_full = False
         self._replay_buffer_size = replay_buffer_size
-        self._replay_batch_size = int(replay_batch_ratio * replay_buffer_size)
-        self._replay_batch_size = max(1, self._replay_batch_size)
+        self._replay_batch_size = replay_batch_size
         self._last_state = None
         self._last_action = None
         self._training = training
@@ -64,18 +63,17 @@ class Agent:
         """
         self._training = value
 
-    def play(self: Self, state: list, temperature: float = 0) -> int:
+    def play(self: Self, state: ndarray, temperature: float = 0) -> int:
         """Execute a move in the board.
 
         Args:
-            state (list): Snake's vision.
+            state (ndarray): Snake's vision.
             temperature (float): ratio of random action.
         Returns:
             int: The item on the board after a move.
         """
-        self._last_state = np.atleast_2d(np.concatenate(state))
-        rewards = self._mlp.eval(self._last_state)
-        print("\r", rewards, end=" ")
+        self._last_state = state
+        rewards = self._mlp.eval(np.atleast_2d(self._last_state))
         if np.random.random_sample(1) < temperature:
             self._last_action = np.random.randint(0, 4)
         else:
@@ -83,12 +81,12 @@ class Agent:
         return self._last_action
 
     def learn(
-        self: Self, next_state: list, reward: float, discount: float
+        self: Self, next_state: ndarray, reward: float, discount: float
     ) -> None:
         """Learn from success or mistake represented by reward.
 
         Args:
-            next_state (list): Snake's vision after a play.
+            next_state (ndarray): Snake's vision after a play.
             reward (float): Success or mistake indicator.
             discount (float): Influence of next steps in the reward.
         """
@@ -99,7 +97,7 @@ class Agent:
         self._replay_buffer_action[self._replay_index] = self._last_action
         self._replay_buffer_rewards[self._replay_index] = reward
         self._replay_buffer_discount[self._replay_index] = discount
-        next_state = np.concatenate(next_state)
+        next_state = next_state.flatten()
         self._replay_buffer_next[self._replay_index] = next_state
         self._replay_index += 1
         self._replay_index %= self._replay_buffer_size
@@ -111,6 +109,8 @@ class Agent:
             self._replay(i)
         elif self._replay_index == 0:
             self._buffer_full = True
+            i = rng.choice(self._replay_buffer_size, self._replay_batch_size)
+            self._replay(i)
         if self._target_network_i >= self._target_netwrok_update_rate:
             self._target_mlp = self._mlp.copy()
             self._target_network_i = 0

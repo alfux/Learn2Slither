@@ -3,12 +3,11 @@
 import sys
 from typing import Self
 
-import numpy as np
 import pyglet
+from numpy import ndarray
 from pyglet.graphics import Batch
 from pyglet.image import SolidColorImagePattern, Texture
 from pyglet.sprite import Sprite
-from pyglet.window import key
 
 from agent import Agent
 from board import Board
@@ -28,9 +27,6 @@ class Display:
         """
         self._window = pyglet.window.Window()
         self._board, self._agent, self._temp = board, agent, temp
-        self._last_distance = self._board.green_distance()
-        self._max_stamina = np.max(self._board.shape) * 2
-        self._stamina = self._max_stamina
         self._tile_size = 32
         self._atlas = self._init_atlas()
         self._floor = self._atlas[0]
@@ -50,6 +46,8 @@ class Display:
             width /= 2
             height /= 2
         self._window.set_size(width, height)
+        self._exploration = True
+        self._neutral_reward = 0.01
 
     def run(self: Self) -> None:
         """Run the event loop."""
@@ -67,11 +65,10 @@ class Display:
         self._batch.draw()
         move = self._agent.play(self._board.view(), self._temp)
         cell = self._board.move(move)
-        print(self._temp, self._board.snake_length, end="                ")
-        if self._board.snake_length > 3:
-            print()
-        if not self._rules(cell):
-            self._temp = np.max([0.05, self._temp - 5e-4])
+        self._rules(cell)
+        if self._exploration:
+            self._temp -= 1e-3
+            self._exploration = self._temp > 0
 
     def _rules(self: Self, cell: int) -> bool:
         """Apply rule of rewards.
@@ -86,68 +83,65 @@ class Display:
             case Board.W | Board.S | -1:
                 return self._death_rules(view, 0)
             case Board.G:
-                return self._green_rules(view, 0.95)
+                return self._green_rules(view, 1 - self._temp)
             case Board.R:
-                return self._red_rules(view, 0.95)
+                return self._red_rules(view, 1 - self._temp)
             case 0:
-                return self._neutral_rules(view, 0.95)
+                return self._neutral_rules(view, 1 - self._temp)
         raise ValueError("_rules: corrupted board cell.")
 
-    def _death_rules(self: Self, view: tuple, discount: float) -> bool:
+    def _death_rules(self: Self, view: ndarray, discount: float) -> bool:
         """Death rules.
 
         Args:
-            view (tuple): current snake's view.
+            view (ndarray): current snake's view.
             discount (float): discount of the Bellman equation.
         Returns:
             bool: Returns False
         """
+        print("Death at size", self._board.snake_length)
         self._agent.learn(view, -1, discount)
         self._board = Board(self._board.shape)
-        self._last_distance = self._board.green_distance()
-        self._stamina = self._max_stamina
+        self._neutral_reward = 0.01
         return False
 
-    def _green_rules(self: Self, view: tuple, discount: float) -> bool:
+    def _green_rules(self: Self, view: ndarray, discount: float) -> bool:
         """Green rules.
 
         Args:
-            view (tuple): current snake's view.
+            view (ndarray): current snake's view.
             discount (float): discount of the Bellman equation.
         Returns:
             bool: Returns True
         """
-        self._agent.learn(view, 3, discount)
-        self._stamina = self._max_stamina
+        self._agent.learn(view, 10, discount)
+        self._neutral_reward = 0.01
         return True
 
-    def _red_rules(self: Self, view: tuple, discount: float) -> bool:
+    def _red_rules(self: Self, view: ndarray, discount: float) -> bool:
         """Red rules.
 
         Args:
-            view (tuple): current snake's view.
+            view (ndarray): current snake's view.
             discount (float): discount of the Bellman equation.
         Returns:
             bool: Returns True
         """
-        self._agent.learn(view, -0.5, discount)
-        self._stamina = self._max_stamina
+        self._agent.learn(view, -0.25, discount)
+        self._neutral_reward = 0.01
         return True
 
-    def _neutral_rules(self: Self, view: tuple, discount: float) -> bool:
+    def _neutral_rules(self: Self, view: ndarray, discount: float) -> bool:
         """Red rules.
 
         Args:
-            view (tuple): current snake's view.
+            view (ndarray): current snake's view.
             discount (float): discount of the Bellman equation.
         Returns:
             bool: True or False if the snake is alive or dead.
         """
-        if self._stamina <= 0:
-            return self._death_rules(view, 0)
-        delta = -0.01
-        self._agent.learn(view, delta, discount)
-        self._stamina -= 1
+        self._agent.learn(view, -self._neutral_reward ** 2, discount)
+        self._neutral_reward += 0.01
         return True
 
     def _init_board_display(self: Self) -> list[list[Sprite]]:
