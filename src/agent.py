@@ -7,6 +7,9 @@ from alfux.mlp import MLP
 from numpy import ndarray
 from numpy import random as rng
 
+from board import Board
+from interpreter import Interpreter
+
 
 class Agent:
     """Learn and plays the game."""
@@ -16,16 +19,23 @@ class Agent:
     def __init__(
             self: Self,
             mlp: MLP, *,
-            training: bool = True,
-            replay_buffer_size=512,
-            replay_batch_size=64,
-            target_network_update_rate=1000
+            replay_buffer_size: int = 512,
+            replay_batch_size: int = 64,
+            target_network_update_rate: int = 1000,
+            initial_temperature: float = 1,
+            initial_discount: float = 0
     ) -> None:
         """Instanciate the Agent.
 
         Args:
             mlp (MLP): Neural network.
             traininf (bool): State of training (on or off).
+            replay_buffer_size (int): Size of the replay buffer.
+            replay_batch_size (int): Size of a replay batch.
+            target_network_update_rate (int): Rate of update for the target
+                network.
+            initial_temperature (float): Starting temperature of the agent.
+            initial_discount (float): Statring learning discount.
         """
         self._mlp = mlp
         self._target_mlp = mlp.copy()
@@ -41,63 +51,61 @@ class Agent:
         self._replay_batch_size = replay_batch_size
         self._last_state = None
         self._last_action = None
-        self._training = training
         self._target_netwrok_update_rate = target_network_update_rate
         self._target_network_i = 0
+        self._temperature = initial_temperature
+        self._discount = initial_discount
+        self._neutral_count = 0
+        self._max_neutral_count = 100
 
     @property
-    def training(self: Self) -> bool:
-        """Get training state.
+    def temperature(self: Self) -> float:
+        """Get the agent's temperature.
 
         Returns:
-            bool: Training state.
+            float: temperature of the agent.
         """
-        return self._training
+        return self._temperature
 
-    @training.setter
-    def training(self: Self, value: bool) -> None:
-        """Set training state.
+    @temperature.setter
+    def temperature(self: Self, value: float) -> None:
+        """Set the agent's temperature.
 
         Args:
-            value (bool): New training state.
+            value (float): temperature between 0 and 1.
         """
-        self._training = value
+        self._temperature = np.clip(value, 0, 1)
 
-    def play(self: Self, state: ndarray, temperature: float = 0) -> int:
+    def play(self: Self, interpreter: Interpreter, board: Board) -> int:
         """Execute a move in the board.
 
         Args:
-            state (ndarray): Snake's vision.
-            temperature (float): ratio of random action.
+            interpreter (Interpreter): Instance of the environment interpreter.
+            board (Board): The environment.
         Returns:
             int: The item on the board after a move.
         """
-        self._last_state = state
+        self._last_state = interpreter.state(board)
         rewards = self._mlp.eval(np.atleast_2d(self._last_state))
-        if np.random.random_sample(1) < temperature:
+        if np.random.random_sample(1) < self._temperature:
             self._last_action = np.random.randint(0, 4)
         else:
             self._last_action = np.argmax(rewards)
         return self._last_action
 
-    def learn(
-        self: Self, next_state: ndarray, reward: float, discount: float
-    ) -> None:
-        """Learn from success or mistake represented by reward.
+    def learn(self: Self, interpreter: Interpreter, board: Board) -> None:
+        """Learn from the difference of state after a play.
 
         Args:
-            next_state (ndarray): Snake's vision after a play.
-            reward (float): Success or mistake indicator.
-            discount (float): Influence of next steps in the reward.
+            interpreter (Interpreter): Instance of the environment interpreter.
+            board (Board): The environment.
         """
-        if not self._training:
-            return
-        self._last_state = self._last_state.flatten()
         self._replay_buffer_state[self._replay_index] = self._last_state
         self._replay_buffer_action[self._replay_index] = self._last_action
-        self._replay_buffer_rewards[self._replay_index] = reward
+        self._replay_buffer_rewards[self._replay_index] = interpreter.reward
+        discount = self._discount if interpreter.snake_alive else 0
         self._replay_buffer_discount[self._replay_index] = discount
-        next_state = next_state.flatten()
+        next_state = interpreter.state(board)
         self._replay_buffer_next[self._replay_index] = next_state
         self._replay_index += 1
         self._replay_index %= self._replay_buffer_size
@@ -114,6 +122,25 @@ class Agent:
         if self._target_network_i >= self._target_netwrok_update_rate:
             self._target_mlp = self._mlp.copy()
             self._target_network_i = 0
+        self._update_temperature(interpreter._last_item)
+
+    def _update_temperature(self: Self, last_reward: float) -> None:
+        """Updates temperature.
+
+        Args:
+            last_reward (float): Last received reward.
+        """
+        if self._temperature > 0:
+            self._temperature = np.clip(self._temperature - 1e-3, 0, 1)
+            self._discount = np.clip(self._discount + 1e-3, 0, 1)
+        if last_reward == Board.N:
+            self._neutral_count += 1
+        else:
+            self._neutral_count = 0
+        if self._neutral_count > self._max_neutral_count:
+            self._temperature = np.clip(self._temperature + 0.2, 0, 1)
+            self._discount = np.clip(self._discount - 0.2, 0, 1)
+            self._neutral_count = 0
 
     def _replay(self: Self, indices: ndarray) -> None:
         """Train on the replay buffer.
@@ -143,14 +170,14 @@ class Agent:
         self._mlp.save(path)
 
     @staticmethod
-    def load(path: str, *, training: bool = True) -> Agent:
+    def load(path: str, **kw: dict) -> Agent:
         """Load an agent from a file.
 
         Args:
             path (str): path of the file.
-            discount (float): Weight of the next step on the reward.
-            traininf (bool): State of training (on or off).
+        KWArgs:
+            **kw (dict): Any kwargs of instanciation.
         Returns:
             Agent: The loaded agent.
         """
-        return Agent(MLP.loadf(path), training=training)
+        return Agent(MLP.loadf(path), **kw)

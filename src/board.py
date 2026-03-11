@@ -11,8 +11,8 @@ from numpy import ndarray
 class Board:
     """Represent the environnement."""
 
-    W, H, S, G, R = 1, 2, 3, 4, 5
-    _TOKEN = dict({"W": 1, "H": 2, "S": 3, "G": 4, "R": 5})
+    N, W, H, S, G, R = 0, 1, 2, 3, 4, 5
+    _TOKEN = dict({"0": 0, "W": 1, "H": 2, "S": 3, "G": 4, "R": 5})
     _MOVES = np.array([[-1, 0], [1, 0], [0, -1], [0, 1]])
     _PRINTS = ["UP", "DOWN", "LEFT", "RIGHT"]
 
@@ -53,7 +53,8 @@ class Board:
         """Get the shape of the board.
 
         Returns:
-            tuple: (height, width)"""
+            tuple: (height, width)
+        """
         return self._shape
 
     @property
@@ -65,7 +66,16 @@ class Board:
         return self._board
 
     @property
-    def snake_length(self: Self) -> int:
+    def head(self: Self) -> tuple:
+        """Get head coordinates.
+
+        Returns:
+            tuple: head row, head column.
+        """
+        return self._head
+
+    @property
+    def length(self: Self) -> int:
         """Get Snake's length.
 
         Returns:
@@ -82,49 +92,6 @@ class Board:
             int: The new cell's item.
         """
         return self._move_snake(self._MOVES[move])
-
-    def view(self: Self) -> tuple[ndarray, ndarray]:
-        """Get vertical and horizontal view of the snake."""
-        left = self._board[self._head[0], :self._head[1]]
-        left = self._encode_axis(left, False)
-        right = self._board[self._head[0], self._head[1] + 1:]
-        right = self._encode_axis(right, True)
-        up = self._board[:self._head[0], self._head[1]]
-        up = self._encode_axis(up, False)
-        down = self._board[self._head[0] + 1:, self._head[1]]
-        down = self._encode_axis(down, True)
-        return np.concatenate([left, right, up, down])
-
-    def _encode_axis(self: Self, direction: ndarray, symetry: bool) -> ndarray:
-        """Encode a vision direction:
-
-            distance_to_wall,
-            distance_to_body,
-            distance_to_poison,
-            distance_to_reward
-
-        Args:
-            direction (ndarray): an ray of vision.
-            symetry (bool): True to count distance from end of array.
-        Returns:
-            ndarray: encoded vision.
-        """
-        encoded = np.zeros(7)
-        if symetry:
-            direction = direction[::-1]
-        for i, item in enumerate(direction):
-            if item == Board.W:
-                encoded[0] = int(len(direction) == 1)
-            elif item == Board.S:
-                encoded[1] += 1
-                encoded[2] = 1 / (len(direction) - i)
-            elif item == Board.R:
-                encoded[3] += 1
-                encoded[4] = 1 / (len(direction) - i)
-            elif item == Board.G:
-                encoded[6] += 1
-                encoded[6] = 1 / (len(direction) - i)
-        return encoded
 
     def green_distance(self: Self) -> int:
         """Distance to closest green.

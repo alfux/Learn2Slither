@@ -10,7 +10,7 @@
   ],
   "layers": [
     {
-      "dimension": [16, 29],
+      "dimension": [16, 17],
       "mono": false,
       "matrix": null,
       "activation": "LReLU"
