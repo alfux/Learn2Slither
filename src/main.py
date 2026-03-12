@@ -6,13 +6,6 @@ from argparse import Namespace
 from learn2slither import Learn2Slither
 
 
-parameters = {
-    "board_size": [10, 10],
-    "board_skin": None,
-    "agent_mlp": "src/default.json"
-}
-
-
 def get_args(description: str = '') -> Namespace:
     """Manages program arguments.
 
@@ -22,6 +15,12 @@ def get_args(description: str = '') -> Namespace:
         Namespace: The arguments.
     """
     av = arg.ArgumentParser(description=description)
+    message = "Agent AI model."
+    av.add_argument("agent", default=None, nargs='?', help=message)
+    message = "Number of training sessions."
+    av.add_argument("--sessions", default=1000, type=int, help=message)
+    message = "Dimensions of the board."
+    av.add_argument("--board-size", default=[10, 10], nargs=2, help=message)
     av.add_argument("--debug", action="store_true", help="Traceback mode.")
     return av.parse_args()
 
@@ -39,7 +38,7 @@ def main() -> int:
             logging.basicConfig(level=logging.DEBUG, format=fmt)
         else:
             logging.basicConfig(level=logging.INFO, format=fmt)
-        l2s = Learn2Slither(**parameters)
+        l2s = Learn2Slither(**vars(av))
         l2s.run()
         return 0
     except Exception as err:

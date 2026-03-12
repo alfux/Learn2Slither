@@ -3,11 +3,14 @@
 import sys
 from typing import Self, Callable
 
+import numpy as np
 import pyglet
+import time
 from numpy import ndarray
 from pyglet.graphics import Batch
 from pyglet.image import SolidColorImagePattern, Texture
 from pyglet.sprite import Sprite
+from pyglet.window import key
 
 from board import Board
 
@@ -20,7 +23,6 @@ class Display:
             width: int,
             height: int,
             update: Callable,
-            stop: Callable
     ) -> None:
         """Display instanciation
 
@@ -41,8 +43,8 @@ class Display:
         self._height = height + 2
         self._batch = Batch()
         self._tiles = self._init_board_display()
-        self._window.push_handlers(on_draw=self.on_draw)
-        self._window.push_handlers(on_close=self.close)
+        self._window.on_draw = self.on_draw
+        self._window.on_key_press = self.on_key_press
         width = self._tile_size * self._width
         height = self._tile_size * self._height
         if sys.platform == "darwin":
@@ -50,22 +52,39 @@ class Display:
             height /= 2
         self._window.set_size(width, height)
         self._update = update
-        self._stop = stop
+        self._sleep = 0
+        self._last_time = time.time()
+        self._step_by_step = False
 
     def run(self: Self) -> None:
         """Run the event loop."""
         pyglet.app.run()
 
     def close(self: Self) -> None:
-        """Close the event loop."""
-        self._stop()
-        pyglet.app.exit()
+        """Close the window."""
+        pyglet.clock.schedule_once(lambda dt: self._window.close(), 0)
 
     def on_draw(self: Self) -> None:
         """Display event function."""
         self._window.clear()
-        self._update_state(self._update())
+        now = time.time()
+        if not self._step_by_step and now - self._last_time > self._sleep:
+            self._update_state(self._update())
+            self._last_time = now
         self._batch.draw()
+
+    def on_key_press(self: Self, symbol: int, _: int) -> None:
+        """Keyboard event function."""
+        match symbol:
+            case key.UP:
+                self._sleep = np.clip(self._sleep - 0.05, 0, 1)
+            case key.DOWN:
+                self._sleep = np.clip(self._sleep + 0.05, 0, 1)
+            case key.S:
+                self._step_by_step = not self._step_by_step
+            case key.SPACE:
+                if self._step_by_step:
+                    self._update_state(self._update())
 
     def _init_board_display(self: Self) -> list[list[Sprite]]:
         """Initialize the board tiles.

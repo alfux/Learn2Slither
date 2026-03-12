@@ -9,17 +9,17 @@
 - [x] If the snake hits a wall, game over this training session ends.
 - [x] If the snake collides with its own tail, game over this taining session ends.
 - [x] The snake eats a green apple, snake's lenght increase by 1. A new green apple appears on the board.
-- [x] The snake eats a red apple,, snake's length is reduced by 1. A new red apple appears on the board.
+- [x] The snake eats a red apple, snake's length is reduced by 1. A new red apple appears on the board.
 - [x] If the snake's length drops to 0, game over this training session ends.
 
 ### Training sessions
 
 An untrained agent will quickly fail. A unique training session can’t be enough to learn: the agent will face hundreds or thousands of training sessions to increase  its skills.
 
-- [ ] The main program will offer a command line parameter to define how many training sessions should be executed.
+- [x] The main program will offer a command line parameter to define how many training sessions should be executed.
 - [x] Graphical interface displaying the board and its items through time. Each choice of the agent updates the board.
-- [ ] The display speed can be configured, with at least one human-readable speed.
-- [ ] Step by step mode.
+- [x] The display speed can be configured, with at least one human-readable speed.
+- [x] Step by step mode.
 
 ## State
 

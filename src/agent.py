@@ -138,8 +138,8 @@ class Agent:
         else:
             self._neutral_count = 0
         if self._neutral_count > self._max_neutral_count:
-            self._temperature = np.clip(self._temperature + 0.2, 0, 1)
-            self._discount = np.clip(self._discount - 0.2, 0, 1)
+            self._temperature = np.clip(self._temperature + 0.1, 0, 1)
+            self._discount = np.clip(self._discount - 0.1, 0, 1)
             self._neutral_count = 0
 
     def _replay(self: Self, indices: ndarray) -> None:
