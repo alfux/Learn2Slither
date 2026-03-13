@@ -162,11 +162,11 @@ class Interpreter:
             direction = direction[::-1]
         for i, item in enumerate(direction):
             if item == Board.W:
-                encoded[0] = 1 / (len(direction) - i)
+                encoded[0] = int(1 == (len(direction) - i))
             elif item == Board.S:
                 encoded[1] = 1 / (len(direction) - i)
             elif item == Board.R:
-                encoded[2] = 1 / (len(direction) - i)
+                encoded[2] = int(1 == (len(direction) - i))
             elif item == Board.G:
                 encoded[3] = 1 / (len(direction) - i)
         return encoded

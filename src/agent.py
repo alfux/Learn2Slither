@@ -54,6 +54,7 @@ class Agent:
         self._target_netwrok_update_rate = target_network_update_rate
         self._target_network_i = 0
         self._temperature = initial_temperature
+        self._min_temp = 0.01
         self._discount = initial_discount
         self._neutral_count = 0
         self._max_neutral_count = 100
@@ -131,15 +132,23 @@ class Agent:
             last_reward (float): Last received reward.
         """
         if self._temperature > 0:
-            self._temperature = np.clip(self._temperature - 1e-3, 0, 1)
-            self._discount = np.clip(self._discount + 1e-3, 0, 1)
+            self._temperature = np.clip(
+                self._temperature - 1e-3, self._min_temp, 1
+            )
+            self._discount = np.clip(
+                self._discount + 1e-3, 0, 1 - self._min_temp
+            )
         if last_reward == Board.N:
             self._neutral_count += 1
         else:
             self._neutral_count = 0
         if self._neutral_count > self._max_neutral_count:
-            self._temperature = np.clip(self._temperature + 0.1, 0, 1)
-            self._discount = np.clip(self._discount - 0.1, 0, 1)
+            self._temperature = np.clip(
+                self._temperature + 0.1, self._min_temp, 1
+            )
+            self._discount = np.clip(
+                self._discount - 0.1, 0, 1 - self._min_temp
+            )
             self._neutral_count = 0
 
     def _replay(self: Self, indices: ndarray) -> None:

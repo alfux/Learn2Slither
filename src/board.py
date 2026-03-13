@@ -14,7 +14,7 @@ class Board:
     N, W, H, S, G, R = 0, 1, 2, 3, 4, 5
     TOKEN = dict({0: "0", 1: "W", 2: "H", 3: "S", 4: "G", 5: "R"})
     DIRECTIONS = np.array([[-1, 0], [1, 0], [0, -1], [0, 1]])
-    MOVES = ["UP   ", "DOWN ", "LEFT ", "RIGHT"]
+    MOVES = ["UP", "DOWN", "LEFT", "RIGHT"]
 
     def __init__(self: Self, shape: tuple = None) -> None:
         """Board instanciation.
