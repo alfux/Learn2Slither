@@ -30,10 +30,11 @@ class Learn2Slither:
         """Run the main loop."""
         self._display.run()
         self._agent.save("agent.json")
+        self._interpreter.clear_terminal_display()
 
     def update(self: Self) -> None:
         """Train with display."""
-        print(self._interpreter.terminal_display(), end="")
+        self._interpreter.terminal_display()
         if self._interpreter.snake_alive:
             move = self._agent.play(self._interpreter, self._board)
             self._interpreter.add_move(move)

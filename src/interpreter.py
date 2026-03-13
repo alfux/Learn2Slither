@@ -54,7 +54,7 @@ class Interpreter:
         Args:
             value (Board): The new board.
         """
-        self._actions = deque(['     '] * (value.shape[0] + 2))
+        self._actions = deque([''] * (value.shape[0] + 2))
         self._board = value
         self._is_alive = True
         self._last_item = Board.H
@@ -105,19 +105,23 @@ class Interpreter:
         self._actions.appendleft(Board.MOVES[move])
         self._actions.pop()
 
-    def terminal_display(self: Self) -> str:
-        """Get the snake's view as a string.
-
-        Returns:
-            str: The snake's view.
-        """
+    def terminal_display(self: Self) -> None:
+        """Print the terminal display."""
         n, m = self._board.head
         view = np.zeros(self._board.shape + np.array([2, 2])).astype(str)
         view[:, :] = " "
         view[:, m] = [Board.TOKEN[elem] for elem in self._board.state[:, m]]
         view[n, :] = [Board.TOKEN[elem] for elem in self._board.state[n, :]]
-        string = [''.join(r) + '\t' + a for r, a in zip(view, self._actions)]
-        return "\n".join(string) + "\033[A" * (len(string) - 1) + '\r'
+        string = [
+            "\033[K" + ''.join(r) + '\t' + a
+            for r, a in zip(view, self._actions)
+        ]
+        print("\n".join(string) + "\033[A" * (len(string) - 1) + '\r', end='')
+
+    def clear_terminal_display(self: Self) -> None:
+        """Clear the terminal display."""
+        length = self._board.state.shape[0]
+        print("\033[K\n" * length + "\033[A" * length, end="")
 
     @staticmethod
     def state(board: Board) -> tuple[ndarray, ndarray]:
