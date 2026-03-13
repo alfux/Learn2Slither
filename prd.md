@@ -26,7 +26,7 @@ An untrained agent will quickly fail. A unique training session can’t be enoug
 ### Snake vision
 
 - [x] The snake can only see in the 4 directions from its head.
-- [ ] The terminal must show his 4 direction vision as follows:
+- [x] The terminal must show his 4 direction vision as follows:
           W 
           0
           0
@@ -51,11 +51,11 @@ W000000000HW
 - [x] Your agent can only perform 4 actions (UP, LEFT, DOWN, RIGHT).
 - [x] This "vision" constitue the only information available to the agent.
 - [x] Board and environment is displayed in a dedicated window.
-- [ ] Vision and actions are displayed in the terminal.
+- [x] Vision and actions are displayed in the terminal.
 
 ## Rewards
 
-- [ ] The goal of the snake is to reach at least a length of 10 cells, and stay alive as long as possible.
+- [x] The goal of the snake is to reach at least a length of 10 cells, and stay alive as long as possible.
 - [x] The agent must learn from its actions and environment.
 
 ## Q-learning
@@ -65,7 +65,7 @@ W000000000HW
 - [x] The training algorithm updates the Q-function to improve performance based on the reward system.
 - [ ] You can train multiple models using different update approaches for the Q function.
 - [x] To discover new paths, the agent must sometimes take random actions.
-- [ ] The training repeats iteratively and iterations are configurable.
+- [x] The training repeats iteratively and iterations are configurable.
 - [ ] At any time it is possible to export a file describing the current learning state of the agent. (Save)
 - [x] A file can be imported by the agent to restore its learning. (Import)
 - [ ] Train multiple models for the git repository.
@@ -77,7 +77,7 @@ W000000000HW
 The program must be modular and have three distinct parts:
 
 - [x] Environment (Board).
-- [ ] Interpreter (Vision / Rewards).
+- [x] Interpreter (Vision / Rewards).
 - [x] Agent (Decision / Learning).
 
 ## Turn-in and Peer-Evaluation
@@ -90,4 +90,4 @@ The program must be modular and have three distinct parts:
 
 - [ ] Higher length up to 35.
 - [ ] Visualy stunning display with lobby, configuration panel, results and statistics.
-- [ ] Possibility to change the board size with the same trained models.
+- [x] Possibility to change the board size with the same trained models.

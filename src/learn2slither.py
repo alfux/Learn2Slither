@@ -19,8 +19,8 @@ class Learn2Slither:
         """
         self._agent = Agent.load(parameters["agent"])
         self._board = Board(parameters.get("board_size", None))
-        self._display = Display(*self._board.shape, self.update)
-        self._interpreter = Interpreter(-1, 1, -0.25, -0.01)
+        self._interpreter = Interpreter(self._board, -1, 1, -0.25, -0.01)
+        self._display = Display(self._interpreter, self.update)
         self._running_app = False
         self._play = False
         self._sessions = parameters["sessions"]
@@ -33,17 +33,19 @@ class Learn2Slither:
 
     def update(self: Self) -> None:
         """Train with display."""
-        move = self._agent.play(self._interpreter, self._board)
-        item = self._board.move(move)
-        self._interpreter.interpret(item)
-        self._agent.learn(self._interpreter, self._board)
-        if not self._interpreter.snake_alive:
-            self._iteration += 1
-            print("death", self._iteration)
+        print(self._interpreter.terminal_display(), end="")
+        if self._interpreter.snake_alive:
+            move = self._agent.play(self._interpreter, self._board)
+            self._interpreter.add_move(move)
+            item = self._board.move(move)
+            self._interpreter.interpret(item)
+            self._agent.learn(self._interpreter, self._board)
+        else:
             self._board = Board(self._board.shape)
+            self._interpreter.board = self._board
+            self._iteration += 1
             if self._iteration >= self._sessions:
                 self._display.close()
-        return self._board.state
 
     def _background_train(self: Self) -> None:
         """Train without display."""

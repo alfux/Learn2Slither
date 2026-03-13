@@ -1,5 +1,6 @@
 """Interpreter managing rewards and interpretations of states and actions."""
 
+from collections import deque
 from typing import Self
 
 import numpy as np
@@ -13,6 +14,7 @@ class Interpreter:
 
     def __init__(
             self: Self,
+            board: Board,
             death_reward: float,
             green_reward: float,
             red_reward: float,
@@ -34,18 +36,38 @@ class Interpreter:
             Board.N: [neutral_reward, True],
             -1: [death_reward, False]
         }
-        self._is_alive = True
-        self._reward = 0
-        self._last_item = Board.H
+        self.board = board
 
     @property
-    def snake_alive(self: Self) -> bool:
-        """Get the last interpreted snake's state.
+    def board(self: Board) -> Board:
+        """Get current board.
 
         Returns:
-            bool: The last interpreted snake's state.
+            Board: Current board.
         """
-        return self._is_alive
+        return self._board
+
+    @board.setter
+    def board(self: Self, value: Board) -> None:
+        """Set the board.
+
+        Args:
+            value (Board): The new board.
+        """
+        self._actions = deque(['     '] * (value.shape[0] + 2))
+        self._board = value
+        self._is_alive = True
+        self._last_item = Board.H
+        self._reward = 0
+
+    @property
+    def item(self: Self) -> int:
+        """Get the last received item.
+
+        Returns:
+            int: The last received item.
+        """
+        return self._last_item
 
     @property
     def reward(self: Self) -> float:
@@ -57,13 +79,13 @@ class Interpreter:
         return self._reward
 
     @property
-    def item(self: Self) -> int:
-        """Get the last received item.
+    def snake_alive(self: Self) -> bool:
+        """Get the last interpreted snake's state.
 
         Returns:
-            int: The last received item.
+            bool: The last interpreted snake's state.
         """
-        return self._last_item
+        return self._is_alive
 
     def interpret(self: Self, item: int) -> None:
         """Interpret item's reward and state of the snake.
@@ -73,6 +95,29 @@ class Interpreter:
         """
         self._reward, self._is_alive = self._rules[item]
         self._last_item = item
+
+    def add_move(self: Self, move: int) -> None:
+        """Add a move in the last moves list.
+
+        Args:
+            move (int): The move code.
+        """
+        self._actions.appendleft(Board.MOVES[move])
+        self._actions.pop()
+
+    def terminal_display(self: Self) -> str:
+        """Get the snake's view as a string.
+
+        Returns:
+            str: The snake's view.
+        """
+        n, m = self._board.head
+        view = np.zeros(self._board.shape + np.array([2, 2])).astype(str)
+        view[:, :] = " "
+        view[:, m] = [Board.TOKEN[elem] for elem in self._board.state[:, m]]
+        view[n, :] = [Board.TOKEN[elem] for elem in self._board.state[n, :]]
+        string = [''.join(r) + '\t' + a for r, a in zip(view, self._actions)]
+        return "\n".join(string) + "\033[A" * (len(string) - 1) + '\r'
 
     @staticmethod
     def state(board: Board) -> tuple[ndarray, ndarray]:

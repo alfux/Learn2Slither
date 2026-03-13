@@ -12,9 +12,9 @@ class Board:
     """Represent the environnement."""
 
     N, W, H, S, G, R = 0, 1, 2, 3, 4, 5
-    _TOKEN = dict({"0": 0, "W": 1, "H": 2, "S": 3, "G": 4, "R": 5})
-    _MOVES = np.array([[-1, 0], [1, 0], [0, -1], [0, 1]])
-    _PRINTS = ["UP", "DOWN", "LEFT", "RIGHT"]
+    TOKEN = dict({0: "0", 1: "W", 2: "H", 3: "S", 4: "G", 5: "R"})
+    DIRECTIONS = np.array([[-1, 0], [1, 0], [0, -1], [0, 1]])
+    MOVES = ["UP   ", "DOWN ", "LEFT ", "RIGHT"]
 
     def __init__(self: Self, shape: tuple = None) -> None:
         """Board instanciation.
@@ -44,26 +44,9 @@ class Board:
             str: String representation of the board.
         """
         board = str(self._board.astype(int))
-        for key, value in self._TOKEN.items():
-            board = board.replace(str(value), key)
-        return board.replace("0", " ")
-
-    @property
-    def shape(self: Self) -> tuple:
-        """Get the shape of the board.
-
-        Returns:
-            tuple: (height, width)
-        """
-        return self._shape
-
-    @property
-    def state(self: Self) -> ndarray:
-        """Get the state of the board.
-
-        Returns:
-            ndarray: The board matrix."""
-        return self._board
+        for key, value in self.TOKEN.items():
+            board = board.replace(str(key), value)
+        return board
 
     @property
     def head(self: Self) -> tuple:
@@ -83,6 +66,23 @@ class Board:
         """
         return len(self._snake)
 
+    @property
+    def shape(self: Self) -> tuple:
+        """Get the shape of the board.
+
+        Returns:
+            tuple: (height, width)
+        """
+        return self._shape
+
+    @property
+    def state(self: Self) -> ndarray:
+        """Get the state of the board.
+
+        Returns:
+            ndarray: The board matrix."""
+        return self._board
+
     def move(self: Self, move: int) -> int:
         """Move th snake.
 
@@ -91,7 +91,7 @@ class Board:
         Returns:
             int: The new cell's item.
         """
-        return self._move_snake(self._MOVES[move])
+        return self._move_snake(self.DIRECTIONS[move])
 
     def green_distance(self: Self) -> int:
         """Distance to closest green.
