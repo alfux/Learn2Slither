@@ -1,5 +1,6 @@
 """Agent module contains the player AI."""
 
+from datetime import datetime
 from typing import Self
 
 import numpy as np
@@ -19,10 +20,12 @@ class Agent:
     def __init__(
             self: Self,
             mlp: MLP, *,
+            learning: bool = True,
             replay_buffer_size: int = 512,
             replay_batch_size: int = 64,
             target_network_update_rate: int = 1000,
             initial_temperature: float = 1,
+            minimal_temperature: float = 0.01,
             initial_discount: float = 0
     ) -> None:
         """Instanciate the Agent.
@@ -54,10 +57,29 @@ class Agent:
         self._target_netwrok_update_rate = target_network_update_rate
         self._target_network_i = 0
         self._temperature = initial_temperature
-        self._min_temp = 0.01
+        self._min_temp = minimal_temperature
         self._discount = initial_discount
         self._neutral_count = 0
         self._max_neutral_count = 100
+        self._learning = learning
+
+    @property
+    def learning(self: Self) -> bool:
+        """Get learning state.
+
+        Returns:
+            bool: True if learning False otherwise.
+        """
+        return self._learning
+
+    @learning.setter
+    def learning(self: Self, value: bool) -> None:
+        """Set learning state.
+
+        Args:
+            value (bool): New learning state.
+        """
+        self._learning = value
 
     @property
     def temperature(self: Self) -> float:
@@ -88,7 +110,8 @@ class Agent:
         """
         self._last_state = interpreter.state(board)
         rewards = self._mlp.eval(np.atleast_2d(self._last_state))
-        if np.random.random_sample(1) < self._temperature:
+        temp = self._temperature if self._learning else self._min_temp
+        if np.random.random_sample(1) < temp:
             self._last_action = np.random.randint(0, 4)
         else:
             self._last_action = np.argmax(rewards)
@@ -101,6 +124,8 @@ class Agent:
             interpreter (Interpreter): Instance of the environment interpreter.
             board (Board): The environment.
         """
+        if not self._learning:
+            return
         self._replay_buffer_state[self._replay_index] = self._last_state
         self._replay_buffer_action[self._replay_index] = self._last_action
         self._replay_buffer_rewards[self._replay_index] = interpreter.reward
@@ -170,12 +195,15 @@ class Agent:
         for _ in self._mlp.update(replay_rewards, states):
             self._target_network_i += 1
 
-    def save(self: Self, path: str) -> None:
+    def save(self: Self, path: str = None) -> None:
         """Save the agent.
 
         Args:
             path (str): path of the file.
         """
+        if path is None:
+            path = datetime.now().isoformat(":", "seconds").replace(":", "")
+            path = "agent_" + path.replace("-", "") + ".json"
         self._mlp.save(path)
 
     @staticmethod

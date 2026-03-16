@@ -3,6 +3,7 @@ import logging
 import sys
 from argparse import Namespace
 
+from display import Display
 from learn2slither import Learn2Slither
 
 
@@ -17,6 +18,8 @@ def get_args(description: str = '') -> Namespace:
     av = arg.ArgumentParser(description=description)
     message = "Agent AI model."
     av.add_argument("agent", default=None, nargs='?', help=message)
+    av.add_argument("--no-learn", action="store_false")
+    av.add_argument("--no-display", action="store_true")
     message = "Number of training sessions."
     av.add_argument("--sessions", default=1000, type=int, help=message)
     message = "Dimensions of the board."
@@ -39,7 +42,11 @@ def main() -> int:
         else:
             logging.basicConfig(level=logging.INFO, format=fmt)
         l2s = Learn2Slither(**vars(av))
-        l2s.run()
+        if av.no_display:
+            l2s.train()
+            l2s.agent.save()
+        else:
+            Display(l2s).run()
         return 0
     except Exception as err:
         debug = "av" in locals() and hasattr(av, "debug") and av.debug

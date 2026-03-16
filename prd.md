@@ -63,14 +63,12 @@ W000000000HW
 - [x] The model uses a Q-function to evaluate the quality of an action in a specific state.
 - [x] The Q-function is implemented with Q-values in a Q-table or a Neural Network.
 - [x] The training algorithm updates the Q-function to improve performance based on the reward system.
-- [ ] You can train multiple models using different update approaches for the Q function.
 - [x] To discover new paths, the agent must sometimes take random actions.
 - [x] The training repeats iteratively and iterations are configurable.
-- [ ] At any time it is possible to export a file describing the current learning state of the agent. (Save)
+- [x] At any time it is possible to export a file describing the current learning state of the agent. (Save)
 - [x] A file can be imported by the agent to restore its learning. (Import)
-- [ ] Train multiple models for the git repository.
-- [ ] A configuration switch must be available to stop the agent from learning. In this state, it must ignore rewards.
-- [ ] It is possible to remove graphical display and terminal states in order to speed up the training.
+- [x] A configuration switch must be available to stop the agent from learning. In this state, it must ignore rewards.
+- [x] It is possible to remove graphical display and terminal states in order to speed up the training.
 
 ## Technical structure
 
@@ -84,10 +82,10 @@ The program must be modular and have three distinct parts:
 
 - [ ] Have a "models" folder with different trained models inside.
 - [ ] Training must be done before evaluation. At least three models with 1, 10 and 100 training sessions.
-- [ ] Snake with length 10 or more at the end of a session and big lifetime.
+- [x] Snake with length 10 or more at the end of a session and big lifetime.
 
 ## Bonus
 
-- [ ] Higher length up to 35.
+- [x] Higher length up to 35.
 - [ ] Visualy stunning display with lobby, configuration panel, results and statistics.
 - [x] Possibility to change the board size with the same trained models.

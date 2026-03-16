@@ -4,7 +4,6 @@ from typing import Self
 
 from agent import Agent
 from board import Board
-from display import Display
 from interpreter import Interpreter
 
 
@@ -17,24 +16,49 @@ class Learn2Slither:
         KWArgs:
             parameters (dict): Application parameters.
         """
-        self._agent = Agent.load(parameters["agent"])
+        self._agent = Agent.load(
+            parameters["agent"], learning=parameters.get("no_learn", True)
+        )
         self._board = Board(parameters.get("board_size", None))
-        self._interpreter = Interpreter(self._board, -1, 1, -0.25, -0.01)
-        self._display = Display(self._interpreter, self.update)
+        self._interpreter = Interpreter(self._board, -1, 1, -0.25, 0)
         self._running_app = False
         self._play = False
         self._sessions = parameters["sessions"]
         self._iteration = 0
 
-    def run(self: Self) -> None:
-        """Run the main loop."""
-        self._display.run()
-        self._agent.save("agent.json")
-        self._interpreter.clear_terminal_display()
+    @property
+    def agent(self: Self) -> Agent:
+        """Get the agent.
 
-    def update(self: Self) -> None:
-        """Train with display."""
-        self._interpreter.terminal_display()
+        Returns:
+            Agent: The agent.
+        """
+        return self._agent
+
+    @property
+    def board(self: Self) -> Board:
+        """Get the current board.
+
+        Returns:
+            Board: The current board.
+        """
+        return self._board
+
+    @property
+    def interpreter(self: Self) -> Interpreter:
+        """Get the interpreter.
+
+        Returns:
+            Interpreter: The interpreter.
+        """
+        return self._interpreter
+
+    def update(self: Self) -> bool:
+        """Plays and train.
+
+        Returns:
+            bool: True when the session is over.
+        """
         if self._interpreter.snake_alive:
             move = self._agent.play(self._interpreter, self._board)
             self._interpreter.add_move(move)
@@ -46,8 +70,10 @@ class Learn2Slither:
             self._interpreter.board = self._board
             self._iteration += 1
             if self._iteration >= self._sessions:
-                self._display.close()
+                return True
+        return False
 
-    def _background_train(self: Self) -> None:
-        """Train without display."""
-        pass
+    def train(self: Self) -> None:
+        """Trains the model in a single loop, without any kind of display."""
+        while not self.update():
+            pass

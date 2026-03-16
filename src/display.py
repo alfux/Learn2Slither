@@ -1,7 +1,7 @@
 """Display module manages the graphic interface."""
 
 import sys
-from typing import Self, Callable
+from typing import Self, Any
 
 import numpy as np
 import pyglet
@@ -13,15 +13,13 @@ from pyglet.sprite import Sprite
 from pyglet.window import key
 
 from board import Board
-from interpreter import Interpreter
+from learn2slither import Learn2Slither
 
 
 class Display:
     """Manage the graphic interface."""
 
-    def __init__(
-            self: Self, interpreter: Interpreter, update: Callable
-    ) -> None:
+    def __init__(self: Self, app: Learn2Slither) -> None:
         """Display instanciation
 
         Args:
@@ -31,39 +29,45 @@ class Display:
         self._window = pyglet.window.Window()
         self._tile_size = 32
         self._atlas = self._init_atlas()
-        width, height = interpreter.board.shape
+        width, height = app.interpreter.board.shape
         self._width, self._height = width + 2, height + 2
         self._batch = Batch()
         self._tiles = self._init_board_display()
         self._window.on_draw = self.on_draw
         self._window.on_key_press = self.on_key_press
+        self._window.on_close = self.on_close
         width = self._tile_size * self._width
         height = self._tile_size * self._height
         if sys.platform == "darwin":
             width /= 2
             height /= 2
         self._window.set_size(width, height)
-        self._update = update
+        self._app = app
         self._sleep = 0
         self._last_time = time.time()
         self._step_by_step = False
-        self._interpreter = interpreter
 
     def run(self: Self) -> None:
         """Run the event loop."""
         pyglet.app.run()
 
-    def close(self: Self) -> None:
-        """Close the window."""
-        pyglet.clock.schedule_once(lambda _: self._window.close(), 0)
+    def on_close(self: Self, _: Any = None) -> None:
+        """Close the app.
+
+        _ (Any): Unused parameter.
+        """
+        self._app.agent.save()
+        self._app.interpreter.clear_terminal_display()
+        self._window.close()
 
     def on_draw(self: Self) -> None:
         """Display event function."""
         self._window.clear()
         now = time.time()
         if not self._step_by_step and now - self._last_time > self._sleep:
-            self._update_state(self._interpreter.board.state)
-            self._update()
+            self._update_state(self._app.board.state)
+            if self._app.update():
+                pyglet.clock.schedule_once(self.on_close, 0)
             self._last_time = now
         self._batch.draw()
 
@@ -74,12 +78,16 @@ class Display:
                 self._sleep = np.clip(self._sleep - 0.05, 0, 1)
             case key.DOWN:
                 self._sleep = np.clip(self._sleep + 0.05, 0, 1)
-            case key.S:
+            case key.L:
+                self._app.agent.learning = not self._app.agent.learning
+            case key.P:
                 self._step_by_step = not self._step_by_step
+            case key.S:
+                self._app.agent.save()
             case key.SPACE:
                 if self._step_by_step:
-                    self._update_state(self._interpreter.board.state)
-                    self._update()
+                    self._update_state(self._app.board.state)
+                    self._app.update()
 
     def _init_board_display(self: Self) -> list[list[Sprite]]:
         """Initialize the board tiles.
@@ -133,6 +141,7 @@ class Display:
         Args:
             board_state (ndarray): current state of the board.
         """
+        self._app.interpreter.terminal_display()
         for i in range(board_state.shape[0]):
             for j in range(board_state.shape[1]):
                 match board_state[i, j]:
