@@ -4,7 +4,7 @@ import sys
 from typing import Self, Any
 
 import numpy as np
-import pyglet
+import pyglet as pyg
 import time
 from numpy import ndarray
 from pyglet.graphics import Batch
@@ -26,7 +26,7 @@ class Display:
             update (Callable): function to call on display update.
             stop (Callable): function to call on close.
         """
-        self._window = pyglet.window.Window()
+        self._window = pyg.window.Window()
         self._tile_size = 32
         self._atlas = self._init_atlas()
         width, height = app.interpreter.board.shape
@@ -49,7 +49,7 @@ class Display:
 
     def run(self: Self) -> None:
         """Run the event loop."""
-        pyglet.app.run()
+        pyg.app.run()
 
     def on_close(self: Self, _: Any = None) -> None:
         """Close the app.
@@ -67,7 +67,7 @@ class Display:
         if not self._step_by_step and now - self._last_time > self._sleep:
             self._update_state(self._app.board.state)
             if self._app.update():
-                pyglet.clock.schedule_once(self.on_close, 0)
+                pyg.clock.schedule_once(self.on_close, 0)
             self._last_time = now
         self._batch.draw()
 

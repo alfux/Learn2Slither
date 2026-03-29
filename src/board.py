@@ -16,13 +16,13 @@ class Board:
     DIRECTIONS = np.array([[-1, 0], [1, 0], [0, -1], [0, 1]])
     MOVES = ["UP", "DOWN", "LEFT", "RIGHT"]
 
-    def __init__(self: Self, shape: tuple = None) -> None:
+    def __init__(self: Self, size: int = None) -> None:
         """Board instanciation.
 
         Args:
-            shape (tuple): Dimension of the board.
+            size (int): Dimension of the board.
         """
-        self._shape = shape if shape is not None else (10, 10)
+        self._shape = (size, size) if size is not None else (10, 10)
         self._board = np.zeros(self._shape + np.array([2, 2]))
         self._board[0] = self.W
         self._board[-1] = self.W
@@ -74,6 +74,15 @@ class Board:
             tuple: (height, width)
         """
         return self._shape
+
+    @property
+    def size(self: Self) -> int:
+        """Get the size of the board.
+
+        Returns:
+            int: Length of one side of the square.
+        """
+        return self._shape[0]
 
     @property
     def state(self: Self) -> ndarray:

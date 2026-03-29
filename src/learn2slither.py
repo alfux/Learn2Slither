@@ -66,7 +66,7 @@ class Learn2Slither:
             self._interpreter.interpret(item)
             self._agent.learn(self._interpreter, self._board)
         else:
-            self._board = Board(self._board.shape)
+            self._board = Board(self._board.size)
             self._interpreter.board = self._board
             self._iteration += 1
             if self._iteration >= self._sessions:
