@@ -19,7 +19,7 @@ def get_args(description: str = '') -> Namespace:
     av = arg.ArgumentParser(description=description)
     message = "Agent AI model."
     av.add_argument("agent", default=None, nargs='?', help=message)
-    av.add_argument("--no-learn", action="store_false")
+    av.add_argument("--no-learn", action="store_true")
     av.add_argument("--no-display", action="store_true")
     message = "Number of training sessions."
     av.add_argument("--sessions", default=1000, type=int, help=message)
@@ -42,6 +42,8 @@ def main() -> int:
             logging.basicConfig(level=logging.DEBUG, format=fmt)
         else:
             logging.basicConfig(level=logging.INFO, format=fmt)
+        Menu().run()
+        quit()
         if len(sys.argv) == 1:
             Menu().run()
         else:

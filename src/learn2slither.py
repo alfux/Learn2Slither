@@ -17,7 +17,8 @@ class Learn2Slither:
             parameters (dict): Application parameters.
         """
         self._agent = Agent.load(
-            parameters["agent"], learning=parameters.get("no_learn", True)
+            parameters["agent"],
+            learning=(not parameters.get("no_learn", False))
         )
         self._board = Board(parameters.get("board_size", None))
         self._interpreter = Interpreter(self._board, -1, 1, -0.25, 0)

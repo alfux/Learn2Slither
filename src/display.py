@@ -19,12 +19,13 @@ from learn2slither import Learn2Slither
 class Display:
     """Manage the graphic interface."""
 
-    def __init__(self: Self, app: Learn2Slither) -> None:
+    def __init__(self: Self, app: Learn2Slither, sleep: float = 0) -> None:
         """Display instanciation
 
         Args:
-            update (Callable): function to call on display update.
-            stop (Callable): function to call on close.
+            app (Learn2Slither): The app to display.
+            sleep (float): Initial sleep time between iterations.
+
         """
         self._window = pyg.window.Window()
         self._tile_size = 32
@@ -43,7 +44,7 @@ class Display:
             height /= 2
         self._window.set_size(width, height)
         self._app = app
-        self._sleep = 0
+        self._sleep = sleep
         self._last_time = time.time()
         self._step_by_step = False
 
