@@ -3,8 +3,6 @@ import logging
 import sys
 from argparse import Namespace
 
-from display import Display
-from learn2slither import Learn2Slither
 from menu import Menu
 
 
@@ -25,6 +23,7 @@ def get_args(description: str = '') -> Namespace:
     av.add_argument("--sessions", default=1000, type=int, help=message)
     message = "Dimensions of the board."
     av.add_argument("--board-size", default=10, type=int, help=message)
+    av.add_argument("--savepath", default=None, help="Save path")
     av.add_argument("--debug", action="store_true", help="Traceback mode.")
     return av.parse_args()
 
@@ -42,17 +41,7 @@ def main() -> int:
             logging.basicConfig(level=logging.DEBUG, format=fmt)
         else:
             logging.basicConfig(level=logging.INFO, format=fmt)
-        Menu().run()
-        quit()
-        if len(sys.argv) == 1:
-            Menu().run()
-        else:
-            l2s = Learn2Slither(**vars(av))
-            if av.no_display:
-                l2s.train()
-                l2s.agent.save()
-            else:
-                Display(l2s).run()
+        Menu(**vars(av)).run()
         return 0
     except Exception as err:
         debug = "av" in locals() and hasattr(av, "debug") and av.debug

@@ -65,7 +65,7 @@ W000000000HW
 - [x] The training algorithm updates the Q-function to improve performance based on the reward system.
 - [x] To discover new paths, the agent must sometimes take random actions.
 - [x] The training repeats iteratively and iterations are configurable.
-- [] At any time it is possible to export a file describing the current learning state of the agent. (Save)
+- [x] At any time it is possible to export a file describing the current learning state of the agent. (Save)
 - [x] A file can be imported by the agent to restore its learning. (Import)
 - [] A configuration switch must be available to stop the agent from learning. In this state, it must ignore rewards.
 - [x] It is possible to remove graphical display and terminal states in order to speed up the training.

@@ -1,5 +1,6 @@
-"""Main module of the application"""
+"""Trainer trainer module of the application"""
 
+from threading import Thread
 from typing import Self
 
 from agent import Agent
@@ -7,11 +8,11 @@ from board import Board
 from interpreter import Interpreter
 
 
-class Learn2Slither:
-    """Main program class"""
+class Trainer:
+    """Trainer trainer program class"""
 
     def __init__(self: Self, **parameters: dict) -> None:
-        """Instanciate an instance of Learn2Slither.
+        """Instanciate an instance of Trainer.
 
         KWArgs:
             parameters (dict): Application parameters.
@@ -26,6 +27,8 @@ class Learn2Slither:
         self._play = False
         self._sessions = parameters["sessions"]
         self._iteration = 0
+        self._running = False
+        self._thread = None
 
     @property
     def agent(self: Self) -> Agent:
@@ -54,6 +57,15 @@ class Learn2Slither:
         """
         return self._interpreter
 
+    @property
+    def running(self: Self) -> bool:
+        """State of background training.
+
+        Returns:
+            True: if a background training is running.
+        """
+        return self._running
+
     def update(self: Self) -> bool:
         """Plays and train.
 
@@ -74,7 +86,36 @@ class Learn2Slither:
                 return True
         return False
 
-    def train(self: Self) -> None:
-        """Trains the model in a single loop, without any kind of display."""
-        while not self.update():
+    def train(self: Self, savepath: str, i: int = None) -> None:
+        """Trains the model in a single threaded loop, without display.
+
+        Args:
+            savepath (str): Path to a save file.
+            i (int): Instance index for multithread saves.
+        """
+        if self._thread is None:
+            self._thread = Thread(target=self._train, args=[savepath, i])
+            self._running = True
+            self._thread.start()
+        else:
+            print("An instance of background training is already running.")
+
+    def stop(self: Self) -> None:
+        """Stop the current threaded training loop."""
+        self._running = False
+
+    def save(self: Self, savepath: str = None, index: int = None) -> None:
+        """Save the current state of the agent.
+
+        Args:
+            savepath (str): path of the file.
+            index (int): index for multiple file save with the same name
+        """
+        self._agent.save(savepath, index)
+
+    def _train(self: Self, savepath: str, i: int) -> None:
+        while not self.update() and self._running:
             pass
+        self._agent.save(savepath, i)
+        self._running = False
+        self._thread = None

@@ -1,6 +1,7 @@
 """Agent module contains the player AI."""
 
 from datetime import datetime
+from pathlib import Path
 from typing import Self
 
 import numpy as np
@@ -150,6 +151,24 @@ class Agent:
             self._target_network_i = 0
         self._update_temperature(interpreter._last_item)
 
+    def save(self: Self, path: str = None, i: int = None) -> None:
+        """Save the agent.
+
+        Args:
+            path (str): path of the file.
+            i (int): index for multiple file save with the same name
+        """
+        if not self._learning:
+            return
+        if path is None:
+            path = datetime.now().isoformat(":", "seconds").replace(":", "")
+            path = Path("agent_" + path.replace("-", "") + ".json")
+        else:
+            path = Path(path)
+        if i is not None and i > 0:
+            path = path.stem + f"({i})" + path.suffix
+        self._mlp.save(path)
+
     def _update_temperature(self: Self, last_reward: float) -> None:
         """Updates temperature.
 
@@ -194,17 +213,6 @@ class Agent:
         states = np.concatenate([states, np.ones((len(states), 1))], axis=1)
         for _ in self._mlp.update(replay_rewards, states):
             self._target_network_i += 1
-
-    def save(self: Self, path: str = None) -> None:
-        """Save the agent.
-
-        Args:
-            path (str): path of the file.
-        """
-        if path is None:
-            path = datetime.now().isoformat(":", "seconds").replace(":", "")
-            path = "agent_" + path.replace("-", "") + ".json"
-        self._mlp.save(path)
 
     @staticmethod
     def load(path: str, **kw: dict) -> Agent:

@@ -13,21 +13,29 @@ from pyglet.sprite import Sprite
 from pyglet.window import key
 
 from board import Board
-from learn2slither import Learn2Slither
+from trainer import Trainer
 
 
 class Display:
     """Manage the graphic interface."""
 
-    def __init__(self: Self, app: Learn2Slither, sleep: float = 0) -> None:
+    def __init__(
+        self: Self,
+        app: Trainer,
+        sleep: float = 0,
+        savepath: str = None,
+        i: int = None
+    ) -> None:
         """Display instanciation
 
         Args:
-            app (Learn2Slither): The app to display.
+            app (Trainer): The app to display.
             sleep (float): Initial sleep time between iterations.
-
+            savepath (str): Savepath of the agent.
+            i (int): Index of the display
         """
         self._window = pyg.window.Window()
+        self._window.set_caption(f"{savepath or "agent"}({i})")
         self._tile_size = 32
         self._atlas = self._init_atlas()
         width, height = app.interpreter.board.shape
@@ -47,6 +55,27 @@ class Display:
         self._sleep = sleep
         self._last_time = time.time()
         self._step_by_step = False
+        self._index = i
+        self._savepath = savepath
+        self._closed = False
+
+    @property
+    def closed(self: Self) -> bool:
+        """State of the window.
+
+        Returns:
+            bool: True if close, False otherwise.
+        """
+        return self._closed
+
+    @property
+    def index(self: Self) -> int:
+        """Index of the display session.
+
+        Returns:
+            int: The display session's index.
+        """
+        return self._index
 
     def run(self: Self) -> None:
         """Run the event loop."""
@@ -57,9 +86,10 @@ class Display:
 
         _ (Any): Unused parameter.
         """
-        self._app.agent.save()
+        self._app.agent.save(self._savepath, self._index)
         self._app.interpreter.clear_terminal_display()
         self._window.close()
+        self._closed = True
 
     def on_draw(self: Self) -> None:
         """Display event function."""
@@ -84,11 +114,20 @@ class Display:
             case key.P:
                 self._step_by_step = not self._step_by_step
             case key.S:
-                self._app.agent.save()
+                self._app.agent.save(self._savepath, self._index)
             case key.SPACE:
                 if self._step_by_step:
                     self._update_state(self._app.board.state)
                     self._app.update()
+
+    def save(self: Self, savepath: str = None, index: int = None) -> None:
+        """Save the current step of the app.
+
+        Args:
+            savepath (str): path of the file.
+            index (int): index for multiple file save with the same name
+        """
+        self._app.agent.save(savepath, index)
 
     def _init_board_display(self: Self) -> list[list[Sprite]]:
         """Initialize the board tiles.
