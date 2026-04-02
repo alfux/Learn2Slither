@@ -1,6 +1,7 @@
 """Menu manager module."""
 
 from pathlib import Path
+import sys
 from typing import Self
 
 import pyglet as pyg
@@ -16,6 +17,8 @@ class Menu:
     def __init__(self: Self, w: int = 900, h: int = 600) -> None:
         """Initialize the game."""
         self._window = pyg.window.Window(caption="Menu", width=w, height=h)
+        if sys.platform == "darwin":
+            self._window.set_size(w / 2, h / 2)
         self._batch = pyg.graphics.Batch()
         self._game: Display = None
         self._window.on_draw = self.on_draw
