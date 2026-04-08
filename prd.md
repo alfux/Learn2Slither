@@ -67,7 +67,7 @@ W000000000HW
 - [x] The training repeats iteratively and iterations are configurable.
 - [x] At any time it is possible to export a file describing the current learning state of the agent. (Save)
 - [x] A file can be imported by the agent to restore its learning. (Import)
-- [] A configuration switch must be available to stop the agent from learning. In this state, it must ignore rewards.
+- [x] A configuration switch must be available to stop the agent from learning. In this state, it must ignore rewards.
 - [x] It is possible to remove graphical display and terminal states in order to speed up the training.
 
 ## Technical structure

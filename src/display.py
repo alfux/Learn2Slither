@@ -11,6 +11,7 @@ from pyglet.graphics import Batch
 from pyglet.image import SolidColorImagePattern, Texture
 from pyglet.sprite import Sprite
 from pyglet.window import key
+from pyglet.window.xlib import XlibWindow
 
 from board import Board
 from trainer import Trainer
@@ -34,23 +35,6 @@ class Display:
             savepath (str): Savepath of the agent.
             i (int): Index of the display
         """
-        self._window = pyg.window.Window()
-        self._window.set_caption(f"{savepath or "agent"}({i})")
-        self._tile_size = 32
-        self._atlas = self._init_atlas()
-        width, height = app.interpreter.board.shape
-        self._width, self._height = width + 2, height + 2
-        self._batch = Batch()
-        self._tiles = self._init_board_display()
-        self._window.on_draw = self.on_draw
-        self._window.on_key_press = self.on_key_press
-        self._window.on_close = self.on_close
-        width = self._tile_size * self._width
-        height = self._tile_size * self._height
-        if sys.platform == "darwin":
-            width /= 2
-            height /= 2
-        self._window.set_size(width, height)
         self._app = app
         self._sleep = sleep
         self._last_time = time.time()
@@ -58,6 +42,23 @@ class Display:
         self._index = i
         self._savepath = savepath
         self._closed = False
+        self._done = False
+        self._tile_size = 32
+        width, height = app.interpreter.board.shape
+        self._width, self._height = width + 2, height + 2
+        width = self._tile_size * self._width
+        height = self._tile_size * self._height
+        if sys.platform == "darwin":
+            width /= 2
+            height /= 2
+        self._window = pyg.window.Window(width=width, height=height)
+        self._window.set_caption(f"{savepath or "agent"}({i})")
+        self._atlas = self._init_atlas()
+        self._batch = Batch()
+        self._tiles = self._init_board_display()
+        self._window.push_handlers(on_draw=self.on_draw)
+        self._window.push_handlers(on_key_press=self.on_key_press)
+        self._window.push_handlers(on_close=self.on_close)
 
     @property
     def closed(self: Self) -> bool:
@@ -77,6 +78,15 @@ class Display:
         """
         return self._index
 
+    @property
+    def window(self: Self) -> XlibWindow:
+        """Window of the display.
+
+        Args:
+            XlibWindow: The window object.
+        """
+        return self._window
+
     def run(self: Self) -> None:
         """Run the event loop."""
         pyg.app.run()
@@ -88,7 +98,6 @@ class Display:
         """
         self._app.agent.save(self._savepath, self._index)
         self._app.interpreter.clear_terminal_display()
-        self._window.close()
         self._closed = True
 
     def on_draw(self: Self) -> None:
@@ -97,8 +106,8 @@ class Display:
         now = time.time()
         if not self._step_by_step and now - self._last_time > self._sleep:
             self._update_state(self._app.board.state)
-            if self._app.update():
-                pyg.clock.schedule_once(self.on_close, 0)
+            if self._done or self._app.update():
+                self._done = True
             self._last_time = now
         self._batch.draw()
 
@@ -118,7 +127,8 @@ class Display:
             case key.SPACE:
                 if self._step_by_step:
                     self._update_state(self._app.board.state)
-                    self._app.update()
+                    if not self._done:
+                        self._app.update()
 
     def save(self: Self, savepath: str = None, index: int = None) -> None:
         """Save the current step of the app.
