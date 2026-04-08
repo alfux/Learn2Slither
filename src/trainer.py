@@ -26,7 +26,9 @@ class Trainer:
         self._running_app = False
         self._play = False
         self._sessions = parameters["sessions"]
-        self._iteration = 0
+        self._iteration = [0]
+        self._lengths = [0]
+        self._times = [0]
         self._running = False
         self._thread = None
 
@@ -66,6 +68,33 @@ class Trainer:
         """
         return self._running
 
+    @property
+    def iterations(self: Self) -> list:
+        """Current state of sessions' iterations.
+
+        Returns:
+            list: every sessions' iterations.
+        """
+        return self._lengths
+
+    @property
+    def lengths(self: Self) -> list:
+        """Current state of sessions' lengths.
+
+        Returns:
+            list: every sessions' lengths.
+        """
+        return self._lengths
+
+    @property
+    def times(self: Self) -> list:
+        """Current state of sessions' times.
+
+        Returns:
+            list: every sessions' times.
+        """
+        return self._times
+
     def update(self: Self) -> bool:
         """Plays and train.
 
@@ -78,12 +107,17 @@ class Trainer:
             item = self._board.move(move)
             self._interpreter.interpret(item)
             self._agent.learn(self._interpreter, self._board)
+            self._times[-1] += 1
         else:
+            self._lengths[-1] = self._board.length
+            iteration = self._iteration[-1] + 1
+            if iteration >= self._sessions:
+                return True
             self._board = Board(self._board.size)
             self._interpreter.board = self._board
-            self._iteration += 1
-            if self._iteration >= self._sessions:
-                return True
+            self._iteration.append(iteration)
+            self._times.append(0)
+            self._lengths.append(0)
         return False
 
     def train(self: Self, savepath: str, i: int = None) -> None:

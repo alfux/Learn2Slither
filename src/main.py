@@ -24,6 +24,8 @@ def get_args(description: str = '') -> Namespace:
     message = "Dimensions of the board."
     av.add_argument("--board-size", default=10, type=int, help=message)
     av.add_argument("--savepath", default=None, help="Save path")
+    message = "Override maximum threads. May cause instabilities. But funny."
+    av.add_argument("--max-thread", default=1, help=message)
     av.add_argument("--debug", action="store_true", help="Traceback mode.")
     return av.parse_args()
 

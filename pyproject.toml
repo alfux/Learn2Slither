@@ -1,6 +1,6 @@
 [project]
 name = "learn2slither"
-version = "0.1.0"
+version = "1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
@@ -10,6 +10,7 @@ dependencies = [
     "crossfiledialog>=1.1.0",
     "numpy>=2.4.2",
     "pyglet>=2.1.13",
+    "pywin32>=311",
 ]
 
 [tool.uv.sources]

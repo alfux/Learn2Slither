@@ -1,7 +1,6 @@
 """Menu manager module."""
 
 from pathlib import Path
-import sys
 from typing import Self, Callable
 
 import crossfiledialog as cfd
@@ -29,7 +28,6 @@ class Menu:
         self._window = pyg.window.Window(caption="Menu", width=w, height=h)
         pyg.gl.glClearColor(100 / 255, 100 / 255, 100 / 255, 1)
         self._batch = pyg.graphics.Batch()
-        self._game: Display = None
         self._window.push_handlers(on_draw=self.on_draw)
         self._window.push_handlers(on_mouse_motion=self.on_mouse_motion)
         self._window.push_handlers(on_mouse_press=self.on_mouse_press)
@@ -42,6 +40,17 @@ class Menu:
 
     def _init_menu(self: Self) -> None:
         """Initialize the menu."""
+        self._init_menu_title()
+        self._init_option_title()
+        self._init_buttons()
+        self._init_session_title()
+        self._init_session_field()
+        self._push_session_field_handlers()
+        self._init_speed_title()
+        self._init_speed_gauge()
+
+    def _init_menu_title(self: Self) -> None:
+        """Initialize Menu title."""
         self._menu_title = pyg.text.Label(
             "Menu",
             0.5 * self._window.width,
@@ -51,6 +60,9 @@ class Menu:
             anchor_y="center",
             batch=self._batch
         )
+
+    def _init_option_title(self: Self) -> None:
+        """Initialize Option title."""
         self._option_title = pyg.text.Label(
             "Options",
             0.775 * self._window.width,
@@ -60,103 +72,168 @@ class Menu:
             anchor_y="center",
             batch=self._batch
         )
+
+    def _init_buttons(self: Self) -> None:
+        """Initialize buttons."""
         self._buttons = [
-            Button(
-                0.1 * self._window.width,
-                0.4 * self._window.height,
-                0.3 * self._window.width,
-                0.2 * self._window.height,
-                label="Start",
-                font_size=22,
-                color=(0, 200, 0),
-                hover=(0, 150, 0),
-                batch=self._batch,
-                callback=self._start_button_callback
-            ),
-            Button(
-                0.1 * self._window.width,
-                0.15 * self._window.height,
-                0.3 * self._window.width,
-                0.2 * self._window.height,
-                label="Stop",
-                font_size=22,
-                color=(200, 0, 0),
-                hover=(150, 0, 0),
-                batch=self._batch,
-                callback=self._stop_button_callback
-            ),
-            Button(
-                0.6 * self._window.width,
-                0.55 * self._window.height,
-                0.15 * self._window.width,
-                0.12 * self._window.height,
-                label="Learn",
-                font_size=22,
-                color=(200, 0, 0),
-                batch=self._batch,
-                toggle=(0, 200, 0),
-                toggled=True,
-                callback=self._learn_button_callback
-            ),
-            Button(
-                0.8 * self._window.width,
-                0.55 * self._window.height,
-                0.15 * self._window.width,
-                0.12 * self._window.height,
-                label="Display",
-                font_size=22,
-                color=(200, 0, 0),
-                batch=self._batch,
-                toggle=(0, 200, 0),
-                toggled=True,
-                callback=self._display_button_callback
-            ),
-            Button(
-                0.6 * self._window.width,
-                0.35 * self._window.height,
-                0.15 * self._window.width,
-                0.12 * self._window.height,
-                label="Save",
-                font_size=22,
-                color=(0, 200, 0),
-                hover=(0, 150, 0),
-                batch=self._batch,
-                callback=self._save_button_callback
-            ),
-            Button(
-                0.8 * self._window.width,
-                0.35 * self._window.height,
-                0.15 * self._window.width,
-                0.12 * self._window.height,
-                label="SaveAs",
-                font_size=22,
-                color=(0, 200, 0),
-                hover=(0, 150, 0),
-                batch=self._batch,
-                callback=self._save_as_button_callback
-            ),
-            Button(
-                0.6 * self._window.width,
-                0.15 * self._window.height,
-                0.15 * self._window.width,
-                0.12 * self._window.height,
-                label="Load",
-                font_size=22,
-                color=(0, 200, 0),
-                hover=(0, 150, 0),
-                batch=self._batch,
-                callback=self._load_button_callback
-            ),
+            self._init_start_button(),
+            self._init_stop_button(),
+            self._init_learn_button(),
+            self._init_display_button(),
+            self._init_save_button(),
+            self._init_save_as_button(),
+            self._init_load_button(),
         ]
+
+    def _init_start_button(self: Self) -> Button:
+        """Create Start button.
+
+        Returns:
+            Button: Start button.
+        """
+        return Button(
+            0.1 * self._window.width,
+            0.4 * self._window.height,
+            0.3 * self._window.width,
+            0.2 * self._window.height,
+            label="Start",
+            font_size=22,
+            color=(0, 200, 0),
+            hover=(0, 150, 0),
+            batch=self._batch,
+            callback=self._start_button_callback
+        )
+
+    def _init_stop_button(self: Self) -> Button:
+        """Create Stop button.
+
+        Returns:
+            Button: Stop button.
+        """
+        return Button(
+            0.1 * self._window.width,
+            0.15 * self._window.height,
+            0.3 * self._window.width,
+            0.2 * self._window.height,
+            label="Stop",
+            font_size=22,
+            color=(200, 0, 0),
+            hover=(150, 0, 0),
+            batch=self._batch,
+            callback=self._stop_button_callback
+        )
+
+    def _init_learn_button(self: Self) -> Button:
+        """Create Learn button.
+
+        Returns:
+            Button: Learn button.
+        """
+        return Button(
+            0.6 * self._window.width,
+            0.55 * self._window.height,
+            0.15 * self._window.width,
+            0.12 * self._window.height,
+            label="Learn",
+            font_size=22,
+            color=(200, 0, 0),
+            batch=self._batch,
+            toggle=(0, 200, 0),
+            toggled=True,
+            callback=self._learn_button_callback
+        )
+
+    def _init_display_button(self: Self) -> Button:
+        """Create Display button.
+
+        Returns:
+            Button: Display button.
+        """
+        return Button(
+            0.8 * self._window.width,
+            0.55 * self._window.height,
+            0.15 * self._window.width,
+            0.12 * self._window.height,
+            label="Display",
+            font_size=22,
+            color=(200, 0, 0),
+            batch=self._batch,
+            toggle=(0, 200, 0),
+            toggled=True,
+            callback=self._display_button_callback
+        )
+
+    def _init_save_button(self: Self) -> Button:
+        """Create Save button.
+
+        Returns:
+            Button: Save button.
+        """
+        return Button(
+            0.6 * self._window.width,
+            0.35 * self._window.height,
+            0.15 * self._window.width,
+            0.12 * self._window.height,
+            label="Save",
+            font_size=22,
+            color=(0, 200, 0),
+            hover=(0, 150, 0),
+            batch=self._batch,
+            callback=self._save_button_callback
+        )
+
+    def _init_save_as_button(self: Self) -> Button:
+        """Create SaveAs button.
+
+        Returns:
+            Button: SaveAs button.
+        """
+        return Button(
+            0.8 * self._window.width,
+            0.35 * self._window.height,
+            0.15 * self._window.width,
+            0.12 * self._window.height,
+            label="SaveAs",
+            font_size=22,
+            color=(0, 200, 0),
+            hover=(0, 150, 0),
+            batch=self._batch,
+            callback=self._save_as_button_callback
+        )
+
+    def _init_load_button(self: Self) -> Button:
+        """Create Load button.
+
+        Returns:
+            Button: Load button.
+        """
+        return Button(
+            0.6 * self._window.width,
+            0.15 * self._window.height,
+            0.15 * self._window.width,
+            0.12 * self._window.height,
+            label="Load",
+            font_size=22,
+            color=(0, 200, 0),
+            hover=(0, 150, 0),
+            batch=self._batch,
+            callback=self._load_button_callback
+        )
+
+    def _init_session_title(self: Self) -> None:
+        """Init session title."""
         self._session_title = pyg.text.Label(
             "Sessions",
             0.8 * self._window.width,
-            0.25 * self._window.height,
+            0.27 * self._window.height,
             font_size=22,
             anchor_x="left",
             anchor_y="center",
             batch=self._batch
         )
+
+    def _init_session_field(self: Self) -> None:
+        """Init session field."""
         self._blank_text_field = pyg.shapes.Rectangle(
             0.8 * self._window.width,
             0.19 * self._window.height,
@@ -168,11 +245,11 @@ class Menu:
         self._document = pyg.text.document.UnformattedDocument(
             str(self._parameters["sessions"])
         )
-        self._document.set_style(0, 0, {"font_size": 22})
+        self._document.set_style(0, 0, {"font_size": 18})
         layout = pyg.text.layout.IncrementalTextLayout(
             self._document,
-            0.93 * self._window.width,
-            0.19 * self._window.height,
+            0.92 * self._window.width,
+            0.21 * self._window.height,
             width=0.15 * self._window.width,
             height=0.06 * self._window.height,
             anchor_x="center",
@@ -181,6 +258,9 @@ class Menu:
             batch=self._batch
         )
         self._caret = pyg.text.caret.Caret(layout)
+
+    def _push_session_field_handlers(self: Self) -> None:
+        """Register session field handlers."""
         self._window.push_handlers(
             on_text=self._no_return(self._caret.on_text)
         )
@@ -195,6 +275,22 @@ class Menu:
         self._window.push_handlers(
             on_mouse_press=self._no_return(self._caret.on_mouse_press)
         )
+        self._window.push_handlers(on_key_press=self.on_key_press)
+
+    def _init_speed_title(self: Self) -> None:
+        """Init speed title."""
+        self._speed_title = pyg.text.Label(
+            "Speed",
+            0.6 * self._window.width,
+            0.12 * self._window.height,
+            font_size=22,
+            anchor_x="left",
+            anchor_y="center",
+            batch=self._batch
+        )
+
+    def _init_speed_gauge(self: Self) -> None:
+        """Init speed gauge."""
         self._gauge_x_min = 0.6 * self._window.width
         self._gauge_y_min = 0.04 * self._window.height
         self._gauge_width = 0.35 * self._window.width
@@ -209,10 +305,10 @@ class Menu:
             (255, 255, 255),
             batch=self._batch
         )
-        self._green__gauge = pyg.shapes.Rectangle(
+        self._green_gauge = pyg.shapes.Rectangle(
             self._gauge_x_min,
             self._gauge_y_min,
-            0,
+            (1 - self._parameters["sleep"]) * self._gauge_width,
             self._gauge_height,
             (0, 255, 0),
             batch=self._batch
@@ -227,8 +323,6 @@ class Menu:
     def on_draw(self: Self) -> None:
         """Main draw routine."""
         self._window.clear()
-        if self._game is not None:
-            self._game.on_draw()
         self._batch.draw()
         self._background_trainer = [
             trainer for trainer in self._background_trainer if trainer.running
@@ -325,30 +419,39 @@ class Menu:
         Args:
             x (float): X position of the mouse.
         """
-        self._green__gauge.width = x - self._gauge_x_min
+        self._green_gauge.width = np.clip(
+            x - self._gauge_x_min, 0, self._gauge_width
+        )
+        self._parameters["sleep"] = (
+            1 - self._green_gauge.width / self._gauge_width
+        )
 
     def _start_button_callback(self: Self) -> None:
         """Start a training / game session with current parameters."""
         index = len(self._background_trainer) + len(self._display_trainer)
-        if self._parameters["no_display"]:
-            trainer = Trainer(**self._parameters)
-            self._background_trainer.append(trainer)
-            self._stop_background_trainer.append(trainer.stop)
-            trainer.train(self._parameters["savepath"], index)
+        max_thread = len(self._background_trainer) + len(self._display_trainer)
+        if max_thread < self._parameters["max_thread"]:
+            if self._parameters["no_display"]:
+                trainer = Trainer(**self._parameters)
+                self._background_trainer.append(trainer)
+                self._stop_background_trainer.append(trainer.stop)
+                trainer.train(self._parameters["savepath"], index)
+            else:
+                self._display_trainer.append(Display(
+                    Trainer(**self._parameters),
+                    sleep=self._parameters["sleep"],
+                    savepath=self._parameters["savepath"],
+                    i=index
+                ))
         else:
-            self._display_trainer.append(Display(
-                Trainer(**self._parameters),
-                sleep=self._parameters["sleep"],
-                savepath=self._parameters["savepath"],
-                i=index
-            ))
+            print("Max thread reached !")
 
     def _stop_button_callback(self: Self) -> None:
         """Stop all running sessions."""
         for stop in self._stop_background_trainer:
             stop()
         for display in self._display_trainer:
-            pyg.clock.schedule_once(display.window.close, 0)
+            display.close()
 
     def _learn_button_callback(self: Self) -> None:
         """Toggle no_learn parameter."""
@@ -418,4 +521,6 @@ class Menu:
             self._parameters["sleep"] = np.clip(
                 self._parameters["sleep"], 0, 1
             )
+        if "max_thread" not in kw.keys():
+            self._parameters["max_thread"] = 1
         return kw

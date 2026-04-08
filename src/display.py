@@ -11,7 +11,6 @@ from pyglet.graphics import Batch
 from pyglet.image import SolidColorImagePattern, Texture
 from pyglet.sprite import Sprite
 from pyglet.window import key
-from pyglet.window.xlib import XlibWindow
 
 from board import Board
 from trainer import Trainer
@@ -78,18 +77,13 @@ class Display:
         """
         return self._index
 
-    @property
-    def window(self: Self) -> XlibWindow:
-        """Window of the display.
-
-        Args:
-            XlibWindow: The window object.
-        """
-        return self._window
-
     def run(self: Self) -> None:
         """Run the event loop."""
         pyg.app.run()
+
+    def close(self: Self) -> None:
+        """Close the display loop."""
+        pyg.clock.schedule_once(self._close, 0)
 
     def on_close(self: Self, _: Any = None) -> None:
         """Close the app.
@@ -207,3 +201,12 @@ class Display:
                         self._tiles[i][j].image = self._atlas[1]
                     case _:
                         self._tiles[i][j].image = self._atlas[0]
+
+    def _close(self: Self, *_: list) -> None:
+        """Close the display loop.
+
+        Args:
+            _ (list): Parameters for the schedule call (unused).
+        """
+        self._window.close()
+        self.on_close()
