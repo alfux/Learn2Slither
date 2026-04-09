@@ -80,7 +80,7 @@ The program must be modular and have three distinct parts:
 
 ## Turn-in and Peer-Evaluation
 
-- [ ] Have a "models" folder with different trained models inside.
+- [x] Have a "models" folder with different trained models inside.
 - [ ] Training must be done before evaluation. At least three models with 1, 10 and 100 training sessions.
 - [x] Snake with length 10 or more at the end of a session and big lifetime.
 

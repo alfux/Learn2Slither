@@ -9,8 +9,7 @@ dependencies = [
     "bidict>=0.23.1",
     "crossfiledialog>=1.1.0",
     "numpy>=2.4.2",
-    "pyglet>=2.1.13",
-    "pywin32>=311",
+    "pyglet>=2.1.13"
 ]
 
 [tool.uv.sources]
