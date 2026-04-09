@@ -75,7 +75,7 @@ class Trainer:
         Returns:
             list: every sessions' iterations.
         """
-        return self._lengths
+        return self._iteration
 
     @property
     def lengths(self: Self) -> list:

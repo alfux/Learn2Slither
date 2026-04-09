@@ -4,6 +4,7 @@ import sys
 from typing import Self, Any
 
 import numpy as np
+import matplotlib.pyplot as plt
 import pyglet as pyg
 import time
 from numpy import ndarray
@@ -58,6 +59,7 @@ class Display:
         self._window.push_handlers(on_draw=self.on_draw)
         self._window.push_handlers(on_key_press=self.on_key_press)
         self._window.push_handlers(on_close=self.on_close)
+        self._init_graph()
 
     @property
     def closed(self: Self) -> bool:
@@ -104,6 +106,7 @@ class Display:
                 self._done = True
             self._last_time = now
         self._batch.draw()
+        self._update_graph()
 
     def on_key_press(self: Self, symbol: int, _: int) -> None:
         """Keyboard event function."""
@@ -178,6 +181,26 @@ class Display:
             )
             for i in range(len(colors))
         ]
+
+    def _init_graph(self: Self) -> None:
+        """Initialize stat graph."""
+        plt.ion()
+        plt.show(block=False)
+        self._fig = plt.figure()
+        self._ax = self._fig.add_axes((0.1, 0.1, 0.8, 0.8))
+        self._time_line, = self._ax.plot(self._app.iterations, self._app.times)
+        self._len_line, = self._ax.plot(
+            self._app.iterations, self._app.lengths
+        )
+
+    def _update_graph(self: Self) -> None:
+        """Update the stat graph."""
+        self._time_line.set_data(self._app.iterations, self._app.times)
+        self._len_line.set_data(self._app.iterations, self._app.lengths)
+        self._ax.relim()
+        self._ax.autoscale_view()
+        plt.pause(0.001)
+        print(self._app.iterations)
 
     def _update_state(self: Self, board_state: ndarray) -> None:
         """Update the tile matrix to correspond to the board state.
