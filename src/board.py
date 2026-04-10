@@ -22,7 +22,11 @@ class Board:
         Args:
             size (int): Dimension of the board.
         """
-        self._shape = (size, size) if size is not None else (10, 10)
+        if size is not None:
+            size = np.clip(size, 3, None)
+            self._shape = (size, size)
+        else:
+            self._shape = (10, 10)
         self._board = np.zeros(self._shape + np.array([2, 2]))
         self._board[0] = self.W
         self._board[-1] = self.W
@@ -32,9 +36,8 @@ class Board:
         self._free_cell = {k: tuple(v) for k, v in enumerate(self._free_cell)}
         self._free_cell = bidict(self._free_cell)
         self._create_snake()
-        g1 = self._put_item_rand(self.G)
-        g2 = self._put_item_rand(self.G)
-        self._green_pos = {g1, g2}
+        self._put_item_rand(self.G)
+        self._put_item_rand(self.G)
         self._put_item_rand(self.R)
 
     def __str__(self: Self) -> str:
@@ -102,20 +105,6 @@ class Board:
         """
         return self._move_snake(self.DIRECTIONS[move])
 
-    def green_distance(self: Self) -> int:
-        """Distance to closest green.
-
-        Returns:
-            int: Distance to closest green.
-        """
-        distance = np.inf
-        head = self._head
-        for green in self._green_pos:
-            d = np.abs(green[0] - head[0]) + np.abs(green[1] - head[1])
-            if d < distance:
-                distance = d
-        return distance
-
     def _put_item_rand(self: Self, item: int) -> ndarray:
         """Put an item in a random free cell in the board.
 
@@ -124,9 +113,11 @@ class Board:
         Returns:
             ndarray: The random position of the item.
         """
-        pos = self._pop_free(np.random.randint(0, len(self._free_cell)))
-        self._board[pos[0], pos[1]] = item
-        return pos
+        if len(self._free_cell) > 0:
+            pos = self._pop_free(np.random.randint(0, len(self._free_cell)))
+            self._board[pos[0], pos[1]] = item
+            return pos
+        return None
 
     def _remove_free(self: Self, pos: tuple) -> None:
         """Remove a free cell by position.
@@ -200,8 +191,7 @@ class Board:
                 self._board[tail] = self.S
                 self._snake.append(tail)
                 self._remove_free(tail)
-                self._green_pos.remove(aim)
-                self._green_pos.add(self._put_item_rand(self.G))
+                self._put_item_rand(self.G)
             case self.R:
                 self._cut_tail()
                 if len(self._snake) == 0:

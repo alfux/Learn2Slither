@@ -3,6 +3,7 @@
 from threading import Thread
 from typing import Self
 
+
 from agent import Agent
 from board import Board
 from interpreter import Interpreter
@@ -19,18 +20,27 @@ class Trainer:
         """
         self._agent = Agent.load(
             parameters["agent"],
-            learning=(not parameters.get("no_learn", False))
+            learning=(not parameters.get("no_learn", False)),
+            initial_temperature=parameters.get("initial_temperature", 1),
+            minimal_temperature=parameters.get("minimal_temperature", 0.01)
         )
         self._board = Board(parameters.get("board_size", None))
-        self._interpreter = Interpreter(self._board, -1, 1, -0.25, 0)
+        self._interpreter = Interpreter(self._board, -1, 2, -0.25, -0.01)
         self._running_app = False
         self._play = False
         self._sessions = parameters["sessions"]
         self._iteration = [0]
         self._lengths = [0]
+        self._lengths_mean = 0
+        self._lengths_max = 0
+        self._lengths_last = 0
         self._times = [0]
+        self._times_mean = 0
+        self._times_max = 0
+        self._times_last = 0
         self._running = False
         self._thread = None
+        self._stat = parameters.get("display_stat", False)
 
     @property
     def agent(self: Self) -> Agent:
@@ -70,36 +80,90 @@ class Trainer:
 
     @property
     def iterations(self: Self) -> list:
-        """Current state of sessions' iterations.
+        """Iterations array.
 
         Returns:
-            list: every sessions' iterations.
+            list: iteration array.
         """
         return self._iteration
 
     @property
     def lengths(self: Self) -> list:
-        """Current state of sessions' lengths.
+        """Lengths array.
 
         Returns:
-            list: every sessions' lengths.
+            list: lengths array.
         """
         return self._lengths
 
     @property
-    def times(self: Self) -> list:
-        """Current state of sessions' times.
+    def lengths_mean(self: Self) -> float:
+        """Lengths mean.
 
         Returns:
-            list: every sessions' times.
+            float: Lengths mean.
+        """
+        return self._lengths_mean
+
+    @property
+    def lengths_max(self: Self) -> float:
+        """Lengths max.
+
+        Returns:
+            float: Lengths max.
+        """
+        return self._lengths_max
+
+    @property
+    def lengths_last(self: Self) -> float:
+        """Lengths of last death.
+
+        Returns:
+            float: Lenghts of last death.
+        """
+        return self._lengths_last
+
+    @property
+    def times_last(self: Self) -> float:
+        """Times of last death.
+
+        Returns:
+            float: Times of last death.
+        """
+        return self._times_last
+
+    @property
+    def times_mean(self: Self) -> float:
+        """times mean.
+
+        Returns:
+            float: times mean.
+        """
+        return self._times_mean
+
+    @property
+    def times_max(self: Self) -> float:
+        """Times max.
+
+        Returns:
+            float: Times max.
+        """
+        return self._times_max
+
+    @property
+    def times(self: Self) -> list:
+        """Times array.
+
+        Returns:
+            list: times array.
         """
         return self._times
 
-    def update(self: Self) -> bool:
+    def update(self: Self) -> int:
         """Plays and train.
 
         Returns:
-            bool: True when the session is over.
+            int: 0 when snake moved, 1 when reset, 2 when end of training.
         """
         if self._interpreter.snake_alive:
             move = self._agent.play(self._interpreter, self._board)
@@ -108,17 +172,19 @@ class Trainer:
             self._interpreter.interpret(item)
             self._agent.learn(self._interpreter, self._board)
             self._times[-1] += 1
+            return 0
         else:
             self._lengths[-1] = self._board.length
+            self._last_stats()
             iteration = self._iteration[-1] + 1
             if iteration >= self._sessions:
-                return True
+                return 2
             self._board = Board(self._board.size)
             self._interpreter.board = self._board
             self._iteration.append(iteration)
             self._times.append(0)
             self._lengths.append(0)
-        return False
+            return 1
 
     def train(self: Self, savepath: str, i: int = None) -> None:
         """Trains the model in a single threaded loop, without display.
@@ -153,3 +219,26 @@ class Trainer:
         self._agent.save(savepath, i)
         self._running = False
         self._thread = None
+
+    def _last_stats(self: Self) -> None:
+        """Compute last stats."""
+        self._lengths_mean = self._mean(self._lengths_mean, self._lengths)
+        if self._board.length > self._lengths_max:
+            self._lengths_max = self._board.length
+        self._times_mean = self._mean(self._times_mean, self._times)
+        if self._times[-1] > self._times_max:
+            self._times_max = self._times[-1]
+        self._lengths_last = self._board.length
+        self._times_last = self._times[-1]
+
+    @staticmethod
+    def _mean(prev: float, array: list) -> float:
+        """Compute mean from previous mean.
+
+        Args:
+            prev (float): previous mean.
+            array (list): new array.
+        Returns:
+            float: new mean.
+        """
+        return (prev * (len(array) - 1) + array[-1]) / len(array)

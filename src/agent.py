@@ -22,12 +22,12 @@ class Agent:
             self: Self,
             mlp: MLP, *,
             learning: bool = True,
-            replay_buffer_size: int = 512,
-            replay_batch_size: int = 64,
-            target_network_update_rate: int = 1000,
+            replay_buffer_size: int = 1024,
+            replay_batch_size: int = 128,
+            relpay_interval: int = 16,
+            target_network_update_rate: int = 512,
             initial_temperature: float = 1,
             minimal_temperature: float = 0.01,
-            initial_discount: float = 0
     ) -> None:
         """Instanciate the Agent.
 
@@ -50,16 +50,18 @@ class Agent:
         self._replay_buffer_discount = np.zeros(replay_buffer_size)
         self._replay_buffer_next = np.zeros((replay_buffer_size, n))
         self._replay_index = 0
+        self._replay_cooldown = 0
         self._buffer_full = False
         self._replay_buffer_size = replay_buffer_size
         self._replay_batch_size = replay_batch_size
+        self._replay_interval = relpay_interval
         self._last_state = None
         self._last_action = None
         self._target_netwrok_update_rate = target_network_update_rate
         self._target_network_i = 0
-        self._temperature = initial_temperature
+        self._temperature = np.clip(initial_temperature, 0, 1)
         self._min_temp = minimal_temperature
-        self._discount = initial_discount
+        self._discount = 0.99
         self._neutral_count = 0
         self._max_neutral_count = 100
         self._learning = learning
@@ -136,16 +138,12 @@ class Agent:
         self._replay_buffer_next[self._replay_index] = next_state
         self._replay_index += 1
         self._replay_index %= self._replay_buffer_size
-        if self._buffer_full:
-            i = rng.choice(self._replay_buffer_size, self._replay_batch_size)
-            self._replay(i)
-        elif self._replay_index >= self._replay_batch_size:
-            i = rng.choice(self._replay_index, self._replay_batch_size)
-            self._replay(i)
-        elif self._replay_index == 0:
-            self._buffer_full = True
-            i = rng.choice(self._replay_buffer_size, self._replay_batch_size)
-            self._replay(i)
+        if self._replay_cooldown < self._replay_interval:
+            self._replay([self._replay_index - 1])
+            self._replay_cooldown += 1
+        else:
+            self._replay_batch()
+            self._replay_cooldown = 0
         if self._target_network_i >= self._target_netwrok_update_rate:
             self._target_mlp = self._mlp.copy()
             self._target_network_i = 0
@@ -179,9 +177,6 @@ class Agent:
             self._temperature = np.clip(
                 self._temperature - 1e-3, self._min_temp, 1
             )
-            self._discount = np.clip(
-                self._discount + 1e-3, 0, 1 - self._min_temp
-            )
         if last_reward == Board.N:
             self._neutral_count += 1
         else:
@@ -189,9 +184,6 @@ class Agent:
         if self._neutral_count > self._max_neutral_count:
             self._temperature = np.clip(
                 self._temperature + 0.1, self._min_temp, 1
-            )
-            self._discount = np.clip(
-                self._discount - 0.1, 0, 1 - self._min_temp
             )
             self._neutral_count = 0
 
@@ -214,8 +206,21 @@ class Agent:
         for _ in self._mlp.update(replay_rewards, states):
             self._target_network_i += 1
 
+    def _replay_batch(self: Self) -> None:
+        """Get a random replay batch"""
+        if self._buffer_full:
+            i = rng.choice(self._replay_buffer_size, self._replay_batch_size)
+            self._replay(i)
+        elif self._replay_index >= self._replay_batch_size:
+            i = rng.choice(self._replay_index, self._replay_batch_size)
+            self._replay(i)
+        elif self._replay_index == 0:
+            self._buffer_full = True
+            i = rng.choice(self._replay_buffer_size, self._replay_batch_size)
+            self._replay(i)
+
     @staticmethod
-    def load(path: str, **kw: dict) -> Agent:
+    def load(path: str, **kw: dict) -> 'Agent':
         """Load an agent from a file.
 
         Args:

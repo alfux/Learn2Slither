@@ -158,15 +158,20 @@ class Interpreter:
             ndarray: encoded vision.
         """
         encoded = np.zeros(4)
+        wall, snake, green, red = [], [], [], []
         if symetry:
             direction = direction[::-1]
         for i, item in enumerate(direction):
             if item == Board.W:
-                encoded[0] = int(1 == (len(direction) - i))
+                wall.append(1 / (len(direction) - i))
             elif item == Board.S:
-                encoded[1] = 1 / (len(direction) - i)
+                snake.append(1 / (len(direction) - i))
             elif item == Board.R:
-                encoded[2] = int(1 == (len(direction) - i))
+                red.append(1 / (len(direction) - i))
             elif item == Board.G:
-                encoded[3] = 1 / (len(direction) - i)
+                green.append(1 / (len(direction) - i))
+        encoded[0] = np.sum(wall)
+        encoded[1] = np.sum(snake)
+        encoded[2] = np.sum(red)
+        encoded[3] = np.sum(green)
         return encoded

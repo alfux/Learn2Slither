@@ -76,6 +76,14 @@ class Button:
         if self._callback is not None:
             return self._callback(*av, **kw)
 
+    def set_label(self: Self, label: str) -> None:
+        """Change button label.
+
+        Args:
+            label (str): new label.
+        """
+        self._label.text = label
+
     def is_hovered(self: Self, x: int, y: int) -> bool:
         """Detect hovering of the button.
 

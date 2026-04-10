@@ -92,6 +92,7 @@ class Display:
 
         _ (Any): Unused parameter.
         """
+        plt.close()
         self._app.agent.save(self._savepath, self._index)
         self._app.interpreter.clear_terminal_display()
         self._closed = True
@@ -102,11 +103,15 @@ class Display:
         now = time.time()
         if not self._step_by_step and now - self._last_time > self._sleep:
             self._update_state(self._app.board.state)
-            if self._done or self._app.update():
-                self._done = True
+            if not self._done:
+                match self._app.update():
+                    case 1:
+                        self._update_graph()
+                    case 2:
+                        self._update_graph()
+                        self._done = True
             self._last_time = now
         self._batch.draw()
-        self._update_graph()
 
     def on_key_press(self: Self, symbol: int, _: int) -> None:
         """Keyboard event function."""
@@ -124,8 +129,12 @@ class Display:
             case key.SPACE:
                 if self._step_by_step:
                     self._update_state(self._app.board.state)
-                    if not self._done:
-                        self._app.update()
+                    match self._app.update():
+                        case 1:
+                            self._update_graph()
+                        case 2:
+                            self._update_graph()
+                            self._done = True
 
     def save(self: Self, savepath: str = None, index: int = None) -> None:
         """Save the current step of the app.
@@ -182,26 +191,6 @@ class Display:
             for i in range(len(colors))
         ]
 
-    def _init_graph(self: Self) -> None:
-        """Initialize stat graph."""
-        plt.ion()
-        plt.show(block=False)
-        self._fig = plt.figure()
-        self._ax = self._fig.add_axes((0.1, 0.1, 0.8, 0.8))
-        self._time_line, = self._ax.plot(self._app.iterations, self._app.times)
-        self._len_line, = self._ax.plot(
-            self._app.iterations, self._app.lengths
-        )
-
-    def _update_graph(self: Self) -> None:
-        """Update the stat graph."""
-        self._time_line.set_data(self._app.iterations, self._app.times)
-        self._len_line.set_data(self._app.iterations, self._app.lengths)
-        self._ax.relim()
-        self._ax.autoscale_view()
-        plt.pause(0.001)
-        print(self._app.iterations)
-
     def _update_state(self: Self, board_state: ndarray) -> None:
         """Update the tile matrix to correspond to the board state.
 
@@ -233,3 +222,72 @@ class Display:
         """
         self._window.close()
         self.on_close()
+
+    def _init_graph(self: Self) -> None:
+        """Initialize stat graph."""
+        plt.ion()
+        plt.show(block=False)
+        self._fig = plt.figure()
+        self._ax_time = self._fig.add_axes(
+            (0.1, 0.05, 0.7, 0.4), title="Steps"
+        )
+        self._ax_len = self._fig.add_axes(
+            (0.1, 0.55, 0.7, 0.4), title="Length"
+        )
+        self._ax_time_stat = self._fig.add_axes(
+            (0.8, 0.05, 0.2, 0.4), title="Stats"
+        )
+        self._ax_time_stat.set_axis_off()
+        self._ax_len_stat = self._fig.add_axes(
+            (0.8, 0.55, 0.2, 0.4), title="Stats"
+        )
+        self._ax_len_stat.set_axis_off()
+        self._init_graph_content()
+
+    def _init_graph_content(self: Self) -> None:
+        """Init graph content."""
+        self._time_line, = self._ax_time.plot(
+            self._app.iterations, self._app.times, color='gray', linewidth=1
+        )
+        self._len_line, = self._ax_len.plot(
+            self._app.iterations, self._app.lengths, color='green', linewidth=1
+        )
+        self._time_text = self._ax_time_stat.text(
+            0.05, 0.6, "", transform=self._ax_time_stat.transAxes,
+            fontsize=12, verticalalignment='top',
+        )
+        self._len_text = self._ax_len_stat.text(
+            0.05, 0.6, "", transform=self._ax_len_stat.transAxes,
+            fontsize=12, verticalalignment='top',
+        )
+
+    def _update_graph(self: Self) -> None:
+        """Update the stat graph."""
+        app = self._app
+        self._time_line.set_data(app.iterations[:-1], app.times[:-1])
+        self._len_line.set_data(app.iterations[:-1], app.lengths[:-1])
+        self._len_text.set_text(
+            self._stat_text(
+                app.lengths_mean, app.lengths_max, app.lengths_last
+            )
+        )
+        self._time_text.set_text(
+            self._stat_text(
+                app.times_mean, app.times_max, app.times_last
+            )
+        )
+        self._ax_time.relim()
+        self._ax_len.relim()
+        self._ax_time.autoscale_view()
+        self._ax_len.autoscale_view()
+        plt.pause(1e-15)
+
+    @staticmethod
+    def _stat_text(mean: float, max: float, last: float) -> str:
+        """Get a formated string with mean and max.
+
+        Args:
+            mean (float): the mean.
+            max (float): the max.
+        """
+        return f"mean: {mean: 0.2f}\n\nmax: {max: 0.2f}\n\nlast: {last: 0.2f}"

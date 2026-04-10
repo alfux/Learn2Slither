@@ -94,6 +94,8 @@ class Menu:
         """
         if self._gauge_clicked:
             self._speed_gauge_callback(x)
+        elif self._temp_clicked:
+            self._temp_gauge_callback(x)
 
     def on_mouse_motion(self: Self, x: int, y: int, dx: int, dy: int) -> None:
         """Handle mouse motions.
@@ -124,6 +126,10 @@ class Menu:
                 if self._gauge_y_min <= y <= self._gauge_y_max:
                     self._gauge_clicked = True
                     self._speed_gauge_callback(x)
+            if self._temp_x_min <= x <= self._temp_x_max:
+                if self._temp_y_min <= y <= self._temp_y_max:
+                    self._temp_clicked = True
+                    self._temp_gauge_callback(x)
 
     def on_mouse_release(self: Self, x: int, y: int, btn: int, _: int) -> None:
         """Handle mouse press.
@@ -138,6 +144,7 @@ class Menu:
             for button in self._buttons:
                 button.is_hovered(x, y)
         self._gauge_clicked = False
+        self._temp_clicked = False
 
     def _init_menu(self: Self) -> None:
         """Initialize the menu."""
@@ -146,6 +153,8 @@ class Menu:
         self._init_buttons()
         self._init_speed_title()
         self._init_speed_gauge()
+        self._init_temp_title()
+        self._init_temp_gauge()
 
     def _init_menu_title(self: Self) -> None:
         """Initialize Menu title."""
@@ -196,7 +205,7 @@ class Menu:
             0.4 * self._window.height,
             0.3 * self._window.width,
             0.2 * self._window.height,
-            label="Start",
+            label="Start\n" + str(self._parameters["agent"].name),
             font_size=22,
             color=(0, 200, 0),
             hover=(0, 150, 0),
@@ -229,6 +238,7 @@ class Menu:
         Returns:
             Button: Learn button.
         """
+        self._parameters["minimal_temperature"] = 0.05
         return Button(
             0.6 * self._window.width,
             0.5 * self._window.height,
@@ -354,8 +364,20 @@ class Menu:
         """Init speed title."""
         self._speed_title = pyg.text.Label(
             "Speed",
-            0.6 * self._window.width,
-            0.15 * self._window.height,
+            0.55 * self._window.width,
+            0.12 * self._window.height,
+            font_size=22,
+            anchor_x="left",
+            anchor_y="center",
+            batch=self._batch
+        )
+
+    def _init_temp_title(self: Self) -> None:
+        """Init temp title."""
+        self._temp_title = pyg.text.Label(
+            "Temp",
+            0.55 * self._window.width,
+            0.07 * self._window.height,
             font_size=22,
             anchor_x="left",
             anchor_y="center",
@@ -365,7 +387,7 @@ class Menu:
     def _init_speed_gauge(self: Self) -> None:
         """Init speed gauge."""
         self._gauge_x_min = 0.6 * self._window.width
-        self._gauge_y_min = 0.07 * self._window.height
+        self._gauge_y_min = 0.1 * self._window.height
         self._gauge_width = 0.15 * self._window.width
         self._gauge_height = 0.04 * self._window.height
         self._gauge_x_max = self._gauge_x_min + self._gauge_width
@@ -389,6 +411,32 @@ class Menu:
         self._gauge_clicked = False
         self._window.push_handlers(on_mouse_drag=self.on_mouse_drag)
 
+    def _init_temp_gauge(self: Self) -> None:
+        """Init temp gauge."""
+        self._temp_x_min = 0.6 * self._window.width
+        self._temp_y_min = 0.05 * self._window.height
+        self._temp_width = 0.15 * self._window.width
+        self._temp_height = 0.04 * self._window.height
+        self._temp_x_max = self._temp_x_min + self._temp_width
+        self._temp_y_max = self._temp_y_min + self._temp_height
+        self._blank_temp = pyg.shapes.Rectangle(
+            self._temp_x_min,
+            self._temp_y_min,
+            self._temp_width,
+            self._temp_height,
+            (255, 255, 255),
+            batch=self._batch
+        )
+        self._green_temp = pyg.shapes.Rectangle(
+            self._temp_x_min,
+            self._temp_y_min,
+            (1 - self._parameters["sleep"]) * self._temp_width,
+            self._temp_height,
+            (0, 255, 0),
+            batch=self._batch
+        )
+        self._temp_clicked = False
+
     def _speed_gauge_callback(self: Self, x: float) -> None:
         """Update the speed gauge.
 
@@ -400,6 +448,19 @@ class Menu:
         )
         self._parameters["sleep"] = (
             1 - self._green_gauge.width / self._gauge_width
+        )
+
+    def _temp_gauge_callback(self: Self, x: float) -> None:
+        """Update the temp gauge.
+
+        Args:
+            x (float): X position of the mouse.
+        """
+        self._green_temp.width = np.clip(
+            x - self._temp_x_min, 0, self._temp_width
+        )
+        self._parameters["initial_temperature"] = (
+            self._green_temp.width / self._temp_width
         )
 
     def _start_button_callback(self: Self) -> None:
@@ -414,7 +475,7 @@ class Menu:
                 trainer.train(self._parameters["savepath"], index)
             else:
                 self._display_trainer.append(Display(
-                    Trainer(**self._parameters),
+                    Trainer(**self._parameters, display_stat=True),
                     sleep=self._parameters["sleep"],
                     savepath=self._parameters["savepath"],
                     i=index
@@ -432,6 +493,10 @@ class Menu:
     def _learn_button_callback(self: Self) -> None:
         """Toggle no_learn parameter."""
         self._parameters["no_learn"] = not self._parameters["no_learn"]
+        if self._parameters["no_learn"]:
+            self._parameters["minimal_temperature"] = 0.01
+        else:
+            self._parameters["minimal_temperature"] = 0.05
 
     def _display_button_callback(self: Self) -> None:
         """Toggle no_display parameter."""
@@ -439,9 +504,15 @@ class Menu:
 
     def _load_button_callback(self: Self) -> None:
         """Browse for an agent file."""
-        self._parameters["agent"] = cfd.open_file(
-            "Load an agent", filter="*.json"
-        )
+        try:
+            self._parameters["agent"] = Path(cfd.open_file(
+                "Load an agent", filter=".json"
+            ))
+            self._buttons[0].set_label(
+                "Start\n" + str(self._parameters["agent"].name)
+            )
+        except Exception:
+            print("Failed to load file.")
 
     def _save_as_button_callback(self: Self) -> None:
         """Choose a filename for saves."""

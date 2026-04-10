@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "alfux-mlp>=1.0.2",
+    "alfux-mlp>=1.0.5",
     "bidict>=0.23.1",
     "crossfiledialog>=1.1.0",
     "matplotlib>=3.10.8",
