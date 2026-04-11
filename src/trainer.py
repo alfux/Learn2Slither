@@ -22,10 +22,10 @@ class Trainer:
             parameters["agent"],
             learning=(not parameters.get("no_learn", False)),
             initial_temperature=parameters.get("initial_temperature", 1),
-            minimal_temperature=parameters.get("minimal_temperature", 0.01)
+            minimal_temperature=parameters.get("minimal_temperature", 0)
         )
         self._board = Board(parameters.get("board_size", None))
-        self._interpreter = Interpreter(self._board, -1, 2, -0.25, -0.01)
+        self._interpreter = Interpreter(self._board, -1, 1, -0.25, -0.01)
         self._running_app = False
         self._play = False
         self._sessions = parameters["sessions"]

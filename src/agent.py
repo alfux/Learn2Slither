@@ -16,18 +16,17 @@ from interpreter import Interpreter
 class Agent:
     """Learn and plays the game."""
 
-    ACTIONS = np.eye(4)
-
     def __init__(
             self: Self,
             mlp: MLP, *,
             learning: bool = True,
-            replay_buffer_size: int = 1024,
+            replay_buffer_size: int = 8192,
             replay_batch_size: int = 128,
             relpay_interval: int = 16,
             target_network_update_rate: int = 512,
             initial_temperature: float = 1,
-            minimal_temperature: float = 0.01,
+            minimal_temperature: float = 0,
+            discount: float = 0.99
     ) -> None:
         """Instanciate the Agent.
 
@@ -61,9 +60,8 @@ class Agent:
         self._target_network_i = 0
         self._temperature = np.clip(initial_temperature, 0, 1)
         self._min_temp = minimal_temperature
-        self._discount = 0.99
-        self._neutral_count = 0
-        self._max_neutral_count = 100
+        self._discount = np.clip(discount, 0, 1)
+        self._tol = 0.005 / (1 - discount + 1e-15)
         self._learning = learning
 
     @property
@@ -117,7 +115,14 @@ class Agent:
         if np.random.random_sample(1) < temp:
             self._last_action = np.random.randint(0, 4)
         else:
-            self._last_action = np.argmax(rewards)
+            print(rewards)
+            best = np.max(rewards)
+            candidates = np.flatnonzero(
+                np.isclose(rewards, best, atol=self._tol)
+            )
+            print(candidates, self._tol)
+            print()
+            self._last_action = np.random.choice(candidates)
         return self._last_action
 
     def learn(self: Self, interpreter: Interpreter, board: Board) -> None:
@@ -147,7 +152,7 @@ class Agent:
         if self._target_network_i >= self._target_netwrok_update_rate:
             self._target_mlp = self._mlp.copy()
             self._target_network_i = 0
-        self._update_temperature(interpreter._last_item)
+        self._update_temperature()
 
     def save(self: Self, path: str = None, i: int = None) -> None:
         """Save the agent.
@@ -167,25 +172,12 @@ class Agent:
             path = path.stem + f"({i})" + path.suffix
         self._mlp.save(path)
 
-    def _update_temperature(self: Self, last_reward: float) -> None:
-        """Updates temperature.
-
-        Args:
-            last_reward (float): Last received reward.
-        """
+    def _update_temperature(self: Self) -> None:
+        """Updates temperature."""
         if self._temperature > 0:
             self._temperature = np.clip(
                 self._temperature - 1e-3, self._min_temp, 1
             )
-        if last_reward == Board.N:
-            self._neutral_count += 1
-        else:
-            self._neutral_count = 0
-        if self._neutral_count > self._max_neutral_count:
-            self._temperature = np.clip(
-                self._temperature + 0.1, self._min_temp, 1
-            )
-            self._neutral_count = 0
 
     def _replay(self: Self, indices: ndarray) -> None:
         """Train on the replay buffer.

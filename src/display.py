@@ -35,9 +35,7 @@ class Display:
             savepath (str): Savepath of the agent.
             i (int): Index of the display
         """
-        self._app = app
-        self._sleep = sleep
-        self._last_time = time.time()
+        self._app, self._sleep, self._last_time = app, sleep, time.time()
         self._step_by_step = False
         self._index = i
         self._savepath = savepath
@@ -56,6 +54,7 @@ class Display:
         self._atlas = self._init_atlas()
         self._batch = Batch()
         self._tiles = self._init_board_display()
+        self._update_state(self._app.board.state)
         self._window.push_handlers(on_draw=self.on_draw)
         self._window.push_handlers(on_key_press=self.on_key_press)
         self._window.push_handlers(on_close=self.on_close)
@@ -102,7 +101,6 @@ class Display:
         self._window.clear()
         now = time.time()
         if not self._step_by_step and now - self._last_time > self._sleep:
-            self._update_state(self._app.board.state)
             if not self._done:
                 match self._app.update():
                     case 1:
@@ -110,6 +108,7 @@ class Display:
                     case 2:
                         self._update_graph()
                         self._done = True
+            self._update_state(self._app.board.state)
             self._last_time = now
         self._batch.draw()
 
@@ -128,13 +127,13 @@ class Display:
                 self._app.agent.save(self._savepath, self._index)
             case key.SPACE:
                 if self._step_by_step:
-                    self._update_state(self._app.board.state)
                     match self._app.update():
                         case 1:
                             self._update_graph()
                         case 2:
                             self._update_graph()
                             self._done = True
+                    self._update_state(self._app.board.state)
 
     def save(self: Self, savepath: str = None, index: int = None) -> None:
         """Save the current step of the app.
@@ -197,7 +196,7 @@ class Display:
         Args:
             board_state (ndarray): current state of the board.
         """
-        self._app.interpreter.terminal_display()
+        # self._app.interpreter.terminal_display()
         for i in range(board_state.shape[0]):
             for j in range(board_state.shape[1]):
                 match board_state[i, j]:
@@ -253,11 +252,11 @@ class Display:
             self._app.iterations, self._app.lengths, color='green', linewidth=1
         )
         self._time_text = self._ax_time_stat.text(
-            0.05, 0.6, "", transform=self._ax_time_stat.transAxes,
+            0.05, 0.8, "", transform=self._ax_time_stat.transAxes,
             fontsize=12, verticalalignment='top',
         )
         self._len_text = self._ax_len_stat.text(
-            0.05, 0.6, "", transform=self._ax_len_stat.transAxes,
+            0.05, 0.8, "", transform=self._ax_len_stat.transAxes,
             fontsize=12, verticalalignment='top',
         )
 
@@ -281,6 +280,7 @@ class Display:
         self._ax_time.autoscale_view()
         self._ax_len.autoscale_view()
         plt.pause(1e-15)
+        plt.pause(1e-15)
 
     @staticmethod
     def _stat_text(mean: float, max: float, last: float) -> str:
@@ -290,4 +290,4 @@ class Display:
             mean (float): the mean.
             max (float): the max.
         """
-        return f"mean: {mean: 0.2f}\n\nmax: {max: 0.2f}\n\nlast: {last: 0.2f}"
+        return f"mean: {mean: 0.2f}\n\nmax: {max: 0.0f}\n\nlast: {last: 0.0f}"

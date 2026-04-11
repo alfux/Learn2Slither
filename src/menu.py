@@ -238,7 +238,6 @@ class Menu:
         Returns:
             Button: Learn button.
         """
-        self._parameters["minimal_temperature"] = 0.05
         return Button(
             0.6 * self._window.width,
             0.5 * self._window.height,
@@ -494,9 +493,9 @@ class Menu:
         """Toggle no_learn parameter."""
         self._parameters["no_learn"] = not self._parameters["no_learn"]
         if self._parameters["no_learn"]:
-            self._parameters["minimal_temperature"] = 0.01
+            self._parameters["minimal_temperature"] = 0
         else:
-            self._parameters["minimal_temperature"] = 0.05
+            self._parameters.pop("minimal_temperature", None)
 
     def _display_button_callback(self: Self) -> None:
         """Toggle no_display parameter."""
@@ -506,7 +505,7 @@ class Menu:
         """Browse for an agent file."""
         try:
             self._parameters["agent"] = Path(cfd.open_file(
-                "Load an agent", filter=".json"
+                "Load an agent", filter="*json"
             ))
             self._buttons[0].set_label(
                 "Start\n" + str(self._parameters["agent"].name)

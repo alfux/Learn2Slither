@@ -34,9 +34,10 @@ class Interpreter:
             Board.G: [green_reward, True],
             Board.R: [red_reward, True],
             Board.N: [neutral_reward, True],
-            -1: [death_reward, False]
+            Board.D: [death_reward, False]
         }
         self.board = board
+        self._last_positions: dict = {}
 
     @property
     def board(self: Board) -> Board:
@@ -95,6 +96,14 @@ class Interpreter:
         """
         self._reward, self._is_alive = self._rules[item]
         self._last_item = item
+        if item == Board.N:
+            if self._board.head in self._last_positions.keys():
+                self._last_positions[self._board.head] += 1
+            else:
+                self._last_positions[self._board.head] = 0
+            self._reward *= self._last_positions[self._board.head]
+        else:
+            self._last_positions.clear()
 
     def add_move(self: Self, move: int) -> None:
         """Add a move in the last moves list.
@@ -158,20 +167,15 @@ class Interpreter:
             ndarray: encoded vision.
         """
         encoded = np.zeros(4)
-        wall, snake, green, red = [], [], [], []
         if symetry:
             direction = direction[::-1]
         for i, item in enumerate(direction):
             if item == Board.W:
-                wall.append(1 / (len(direction) - i))
+                encoded[0] = (1 / (len(direction) - i))
             elif item == Board.S:
-                snake.append(1 / (len(direction) - i))
+                encoded[1] = (1 / (len(direction) - i))
             elif item == Board.R:
-                red.append(1 / (len(direction) - i))
+                encoded[2] = (1 / (len(direction) - i))
             elif item == Board.G:
-                green.append(1 / (len(direction) - i))
-        encoded[0] = np.sum(wall)
-        encoded[1] = np.sum(snake)
-        encoded[2] = np.sum(red)
-        encoded[3] = np.sum(green)
+                encoded[3] = (1 / (len(direction) - i))
         return encoded

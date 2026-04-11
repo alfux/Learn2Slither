@@ -11,7 +11,7 @@ from numpy import ndarray
 class Board:
     """Represent the environnement."""
 
-    N, W, H, S, G, R = 0, 1, 2, 3, 4, 5
+    N, W, H, S, G, R, D = 0, 1, 2, 3, 4, 5, -1
     TOKEN = dict({0: "0", 1: "W", 2: "H", 3: "S", 4: "G", 5: "R"})
     DIRECTIONS = np.array([[-1, 0], [1, 0], [0, -1], [0, 1]])
     MOVES = ["UP", "DOWN", "LEFT", "RIGHT"]
@@ -181,7 +181,7 @@ class Board:
             int: The previous code of the head's new cell.
         """
         if not self._snake_alive:
-            return -1
+            return Board.D
         aim = tuple(self._snake[0] + dir)
         self._board[self._snake[0]] = self.S
         tail = self._cut_tail()
@@ -196,7 +196,7 @@ class Board:
                 self._cut_tail()
                 if len(self._snake) == 0:
                     self._snake_alive = False
-                    return -1
+                    return Board.D
                 self._put_item_rand(self.R)
             case 0:
                 self._remove_free(aim)

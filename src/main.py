@@ -20,7 +20,7 @@ def get_args(description: str = '') -> Namespace:
     av.add_argument("--no-learn", action="store_true")
     av.add_argument("--no-display", action="store_true")
     message = "Number of training sessions."
-    av.add_argument("--sessions", default=1000, type=int, help=message)
+    av.add_argument("--sessions", default=500, type=int, help=message)
     message = "Dimensions of the board."
     av.add_argument("--board-size", default=10, type=int, help=message)
     av.add_argument("--savepath", default=None, help="Save path")
