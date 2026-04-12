@@ -61,7 +61,7 @@ class Agent:
         self._temperature = np.clip(initial_temperature, 0, 1)
         self._min_temp = minimal_temperature
         self._discount = np.clip(discount, 0, 1)
-        self._tol = 0.005 / (1 - discount + 1e-15)
+        self._tol = 0.05
         self._learning = learning
 
     @property
@@ -117,10 +117,9 @@ class Agent:
         else:
             print(rewards)
             best = np.max(rewards)
-            candidates = np.flatnonzero(
-                np.isclose(rewards, best, atol=self._tol)
-            )
-            print(candidates, self._tol)
+            tol = self._tol * np.max(1, np.abs(best))
+            candidates = np.flatnonzero(np.isclose(rewards, best, atol=tol))
+            print(candidates, tol)
             print()
             self._last_action = np.random.choice(candidates)
         return self._last_action
