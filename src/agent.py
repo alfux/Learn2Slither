@@ -196,11 +196,9 @@ class Agent:
         replay_rewards[np.arange(len(states)), actions] = targets
         states = np.concatenate([states, np.ones((len(states), 1))], axis=1)
         mean_size = self._lengths_buffer[indices].mean()
-        self._mlp.learning_rate = self._og_learning_rate * (
-            max_len - mean_size
-        ) / max_len
-        print(max_len, mean_size, (max_len - mean_size) /
-              max_len, self._mlp.learning_rate)
+        ratio = 1 - (mean_size / max_len) ** 2
+        self._mlp.learning_rate = self._og_learning_rate * ratio
+        print(ratio)
         for _ in self._mlp.update(replay_rewards, states):
             self._target_network_i += 1
 
