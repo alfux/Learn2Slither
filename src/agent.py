@@ -48,6 +48,7 @@ class Agent:
         self._replay_buffer_rewards = np.zeros(replay_buffer_size)
         self._replay_buffer_discount = np.zeros(replay_buffer_size)
         self._replay_buffer_next = np.zeros((replay_buffer_size, n))
+        self._lengths_buffer = np.zeros(replay_buffer_size)
         self._replay_index = 0
         self._replay_cooldown = 0
         self._buffer_full = False
@@ -61,8 +62,9 @@ class Agent:
         self._temperature = np.clip(initial_temperature, 0, 1)
         self._min_temp = minimal_temperature
         self._discount = np.clip(discount, 0, 1)
-        self._tol = 0.02
+        self._tol = 0.01
         self._learning = learning
+        self._og_learning_rate = self._mlp.learning_rate
 
     @property
     def learning(self: Self) -> bool:
@@ -115,12 +117,9 @@ class Agent:
         if np.random.random_sample(1) < temp:
             self._last_action = np.random.randint(0, 4)
         else:
-            print(rewards)
             best = np.max(rewards)
             tol = self._tol * np.max([1, np.abs(best)])
             candidates = np.flatnonzero(np.isclose(rewards, best, atol=tol))
-            print(candidates, tol)
-            print()
             self._last_action = np.random.choice(candidates)
         return self._last_action
 
@@ -138,15 +137,16 @@ class Agent:
         self._replay_buffer_rewards[self._replay_index] = interpreter.reward
         discount = self._discount if interpreter.snake_alive else 0
         self._replay_buffer_discount[self._replay_index] = discount
+        self._lengths_buffer[self._replay_index] = board.length
         next_state = interpreter.state(board)
         self._replay_buffer_next[self._replay_index] = next_state
         self._replay_index += 1
         self._replay_index %= self._replay_buffer_size
         if self._replay_cooldown < self._replay_interval:
-            self._replay([self._replay_index - 1])
+            self._replay([self._replay_index - 1], board.size ** 2)
             self._replay_cooldown += 1
         else:
-            self._replay_batch()
+            self._replay_batch(board.size ** 2)
             self._replay_cooldown = 0
         if self._target_network_i >= self._target_netwrok_update_rate:
             self._target_mlp = self._mlp.copy()
@@ -178,11 +178,12 @@ class Agent:
                 self._temperature - 1e-3, self._min_temp, 1
             )
 
-    def _replay(self: Self, indices: ndarray) -> None:
+    def _replay(self: Self, indices: ndarray, max_len: float) -> None:
         """Train on the replay buffer.
 
         Args:
             indices (ndarray): indices of the random batch to train on.
+            max_len (float): maximum length possible of the snake.
         """
         states = self._replay_buffer_state[indices]
         actions = self._replay_buffer_action[indices]
@@ -194,21 +195,31 @@ class Agent:
         targets = rewards + discounts * next_best_rewards
         replay_rewards[np.arange(len(states)), actions] = targets
         states = np.concatenate([states, np.ones((len(states), 1))], axis=1)
+        mean_size = self._lengths_buffer[indices].mean()
+        self._mlp.learning_rate = self._og_learning_rate * (
+            max_len - mean_size
+        ) / max_len
+        print(max_len, mean_size, (max_len - mean_size) /
+              max_len, self._mlp.learning_rate)
         for _ in self._mlp.update(replay_rewards, states):
             self._target_network_i += 1
 
-    def _replay_batch(self: Self) -> None:
-        """Get a random replay batch"""
+    def _replay_batch(self: Self, max_len: float) -> None:
+        """Get a random replay batch
+
+        Args:
+            max_len (float): maximum length possible of the snake.
+        """
         if self._buffer_full:
             i = rng.choice(self._replay_buffer_size, self._replay_batch_size)
-            self._replay(i)
+            self._replay(i, max_len)
         elif self._replay_index >= self._replay_batch_size:
             i = rng.choice(self._replay_index, self._replay_batch_size)
-            self._replay(i)
+            self._replay(i, max_len)
         elif self._replay_index == 0:
             self._buffer_full = True
             i = rng.choice(self._replay_buffer_size, self._replay_batch_size)
-            self._replay(i)
+            self._replay(i, max_len)
 
     @staticmethod
     def load(path: str, **kw: dict) -> 'Agent':

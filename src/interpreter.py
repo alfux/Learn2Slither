@@ -38,6 +38,7 @@ class Interpreter:
         }
         self.board = board
         self._last_positions: dict = {}
+        self._learning_multiplier = 1
 
     @property
     def board(self: Board) -> Board:
@@ -69,6 +70,16 @@ class Interpreter:
             int: The last received item.
         """
         return self._last_item
+
+    @property
+    def learning_multiplier(self: Self) -> float:
+        """Get the learning multiplier.
+
+        Multiplier depends on the snake's length after last interpretation.
+        Returns:
+            float: the multiplier.
+        """
+        return self._learning_multiplier
 
     @property
     def reward(self: Self) -> float:
@@ -104,6 +115,7 @@ class Interpreter:
             self._reward *= self._last_positions[self._board.head]
         else:
             self._last_positions.clear()
+        self._update_learning_multiplier()
 
     def add_move(self: Self, move: int) -> None:
         """Add a move in the last moves list.
@@ -131,6 +143,11 @@ class Interpreter:
         """Clear the terminal display."""
         length = self._board.state.shape[0]
         print("\033[K\n" * length + "\033[A" * length, end="")
+
+    def _update_learning_multiplier(self: Self) -> None:
+        """Update the learning multiplier based on snake's length."""
+        maximum = self._board.size ** 2
+        self._learning_multiplier = (maximum - self._board.length) / maximum
 
     @staticmethod
     def state(board: Board) -> tuple[ndarray, ndarray]:
