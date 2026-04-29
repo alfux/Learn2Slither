@@ -223,11 +223,13 @@ class Trainer:
     def _last_stats(self: Self) -> None:
         """Compute last stats."""
         self._lengths_mean = self._mean(self._lengths_mean, self._lengths)
+        self._times_mean = self._mean(self._times_mean, self._times)
         if self._board.length > self._lengths_max:
             self._lengths_max = self._board.length
-        self._times_mean = self._mean(self._times_mean, self._times)
-        if self._times[-1] > self._times_max:
             self._times_max = self._times[-1]
+        elif self._board.length == self._lengths_max:
+            if self._times[-1] > self._times_max:
+                self._times_max = self._times[-1]
         self._lengths_last = self._board.length
         self._times_last = self._times[-1]
 

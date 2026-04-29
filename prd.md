@@ -81,11 +81,11 @@ The program must be modular and have three distinct parts:
 ## Turn-in and Peer-Evaluation
 
 - [x] Have a "models" folder with different trained models inside.
-- [ ] Training must be done before evaluation. At least three models with 1, 10 and 100 training sessions.
+- [x] Training must be done before evaluation. At least three models with 1, 10 and 100 training sessions.
 - [x] Snake with length 10 or more at the end of a session and big lifetime.
 
 ## Bonus
 
 - [x] Higher length up to 35.
-- [ ] Visualy stunning display with lobby, configuration panel, results and statistics.
+- [x] Visualy stunning display with lobby, configuration panel, results and statistics.
 - [x] Possibility to change the board size with the same trained models.
