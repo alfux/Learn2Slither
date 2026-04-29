@@ -214,7 +214,7 @@ class Trainer:
         self._agent.save(savepath, index)
 
     def _train(self: Self, savepath: str, i: int) -> None:
-        while not self.update() and self._running:
+        while self.update() != 2 and self._running:
             pass
         self._agent.save(savepath, i)
         self._running = False

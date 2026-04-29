@@ -198,7 +198,6 @@ class Agent:
         mean_size = self._lengths_buffer[indices].mean()
         ratio = 1 - (mean_size / max_len) ** 2
         self._mlp.learning_rate = self._og_learning_rate * ratio
-        print(ratio)
         for _ in self._mlp.update(replay_rewards, states):
             self._target_network_i += 1
 

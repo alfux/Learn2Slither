@@ -467,18 +467,21 @@ class Menu:
         index = len(self._background_trainer) + len(self._display_trainer)
         max_thread = len(self._background_trainer) + len(self._display_trainer)
         if max_thread < self._parameters["max_thread"]:
-            if self._parameters["no_display"]:
-                trainer = Trainer(**self._parameters)
-                self._background_trainer.append(trainer)
-                self._stop_background_trainer.append(trainer.stop)
-                trainer.train(self._parameters["savepath"], index)
-            else:
-                self._display_trainer.append(Display(
-                    Trainer(**self._parameters, display_stat=True),
-                    sleep=self._parameters["sleep"],
-                    savepath=self._parameters["savepath"],
-                    i=index
-                ))
+            try:
+                if self._parameters["no_display"]:
+                    trainer = Trainer(**self._parameters)
+                    self._background_trainer.append(trainer)
+                    self._stop_background_trainer.append(trainer.stop)
+                    trainer.train(self._parameters["savepath"], index)
+                else:
+                    self._display_trainer.append(Display(
+                        Trainer(**self._parameters, display_stat=True),
+                        sleep=self._parameters["sleep"],
+                        savepath=self._parameters["savepath"],
+                        i=index
+                    ))
+            except Exception as err:
+                print("Something went wrong with loading:", err)
         else:
             print("Max thread reached !")
 

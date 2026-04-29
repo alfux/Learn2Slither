@@ -196,7 +196,7 @@ class Display:
         Args:
             board_state (ndarray): current state of the board.
         """
-        # self._app.interpreter.terminal_display()
+        self._app.interpreter.terminal_display()
         for i in range(board_state.shape[0]):
             for j in range(board_state.shape[1]):
                 match board_state[i, j]:
