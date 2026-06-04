@@ -279,8 +279,8 @@ class Display:
         self._ax_len.relim()
         self._ax_time.autoscale_view()
         self._ax_len.autoscale_view()
-        plt.pause(1e-15)
-        plt.pause(1e-15)
+        self._fig.canvas.draw()
+        self._fig.canvas.flush_events()
 
     @staticmethod
     def _stat_text(mean: float, max: float, last: float) -> str:

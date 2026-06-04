@@ -205,7 +205,7 @@ class Menu:
             0.4 * self._window.height,
             0.3 * self._window.width,
             0.2 * self._window.height,
-            label="Start\n" + str(self._parameters["agent"].name),
+            label="Start " + str(self._parameters["agent"].name),
             font_size=22,
             color=(0, 200, 0),
             hover=(0, 150, 0),
@@ -248,7 +248,7 @@ class Menu:
             color=(200, 0, 0),
             batch=self._batch,
             toggle=(0, 200, 0),
-            toggled=True,
+            toggled=(not self._parameters["no_learn"]),
             callback=self._learn_button_callback
         )
 
@@ -268,7 +268,7 @@ class Menu:
             color=(200, 0, 0),
             batch=self._batch,
             toggle=(0, 200, 0),
-            toggled=True,
+            toggled=(not self._parameters["no_display"]),
             callback=self._display_button_callback
         )
 
@@ -650,6 +650,8 @@ class Menu:
         """
         if kw["agent"] is None:
             kw["agent"] = Path(__file__).resolve().parent / "default.json"
+        else:
+            kw["agent"] = Path(kw["agent"])
         if "sleep" not in kw.keys():
             kw["sleep"] = 0
         else:

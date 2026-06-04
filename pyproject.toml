@@ -11,6 +11,7 @@ dependencies = [
     "matplotlib>=3.10.8",
     "numpy>=2.4.2",
     "pyglet>=2.1.13",
+    "pyqt6>=6.11.0",
 ]
 
 [tool.uv.sources]

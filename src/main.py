@@ -31,8 +31,14 @@ def get_args(description: str = '') -> Namespace:
 
 
 def main() -> int:
-    """Test main.
+    """Learn2slither. Train your snake !
 
+    On a display mode run:
+        UP arrow to speed up.
+        Down arrow to speed down.
+        L key to toggle learning on/off.
+        P to enter step by step mode.
+        S to hot save the agent.
     Returns:
         int: return status 0 (success) 1 (error).
     """

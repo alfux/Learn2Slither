@@ -219,6 +219,11 @@ class Trainer:
         self._agent.save(savepath, i)
         self._running = False
         self._thread = None
+        print(
+            f"Session stopped:"
+            f"\n\tMax size: {self._lengths_max}"
+            f"\n\tMax steps: {self._times_max}"
+        )
 
     def _last_stats(self: Self) -> None:
         """Compute last stats."""
